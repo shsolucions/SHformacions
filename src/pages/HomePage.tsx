@@ -57,10 +57,10 @@ export function HomePage() {
                 SH Solucions
               </p>
               {/* Text SEMPRE blanc (fons sempre fosc al hero) */}
-              <h1 className="text-xl font-black font-display leading-tight text-white">
+              <h1 className="text-xl font-black font-display leading-tight" style={{ color: "#ffffff" }}>
                 {t('home.hero_title')}
               </h1>
-              <p className="text-sm mt-1 leading-relaxed text-white/65">
+              <p className="text-sm mt-1 leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }}>
                 {t('home.hero_sub')}
               </p>
             </div>
@@ -95,11 +95,11 @@ export function HomePage() {
                 className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
                 style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
                 <CourseIcon category={key} size={26} />
-                <p className="text-white text-[9px] font-semibold text-center leading-tight drop-shadow">
+                <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                   {t(`cat.${key}`)}
                 </p>
                 {counts[key] !== undefined && (
-                  <p className="text-white/55 text-[8px] leading-none">
+                  <p className="text-[8px] leading-none" style={{ color: "rgba(255,255,255,0.6)" }}>
                     {counts[key]} {counts[key] === 1 ? 'curs' : 'cursos'}
                   </p>
                 )}

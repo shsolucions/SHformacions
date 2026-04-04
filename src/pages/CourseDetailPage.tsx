@@ -115,7 +115,7 @@ export function CourseDetailPage() {
             </div>
           )}
         </div>
-        <h1 className="text-lg font-bold text-white mt-3 leading-snug">{course.name}</h1>
+        <h1 className="text-lg font-bold mt-3 leading-snug" style={{ color: "#ffffff" }}>{course.name}</h1>
         <div className="flex flex-wrap gap-2 mt-2">
           <Badge className={levelColors[course.level]}>{t(`courses.level_${course.level}`)}</Badge>
           <Badge className="text-white/80 bg-white/10 border-white/20 text-xs">

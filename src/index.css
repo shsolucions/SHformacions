@@ -130,8 +130,11 @@ html.light #root {
   border-color: var(--border-strong) !important;
 }
 
-/* ── Text ── */
-.light .text-white         { color: var(--text-primary) !important; }
+/* ── Text — NOTA: text-white dins de gradients/heroes NO s'ha de canviar ── */
+/* Canviem text-white NOMÉS dins de contenidors de fons clar (cards, panels) */
+.light .th-bg-card .text-white,
+.light [style*="var(--bg-card)"] .text-white,
+.light [style*="var(--bg-elevated)"] .text-white { color: var(--text-primary) !important; }
 .light .text-gray-300      { color: #334155 !important; }
 .light .text-gray-400      { color: #475569 !important; }
 .light .text-gray-500      { color: #64748b !important; }
@@ -225,3 +228,13 @@ html.light #root {
 @keyframes slideUp   { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes slideDown { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
 @keyframes robotWave { 0% { transform: rotate(-3deg) translateY(-2px); } 100% { transform: rotate(4deg) translateY(-5px); } }
+
+/* ── Textos sobre fons foscos (gradients, heroes) — sempre blancs ── */
+.text-on-dark,
+.light .text-on-dark {
+  color: #ffffff !important;
+}
+.text-on-dark-muted,
+.light .text-on-dark-muted {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
