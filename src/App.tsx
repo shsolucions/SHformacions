@@ -79,7 +79,7 @@ export default function App() {
         <Route path="/calendar"    element={<Navigate to="/calendari" replace />} />
 
         {/* ── AUTH-ONLY routes ────────────────────────── */}
-        <Route path="/pressupost" element={<RequireAuth><AppLayout><BudgetPage /></AppLayout></RequireAuth>} />
+        <Route path="/pressupost" element={<AppLayout><BudgetPage /></AppLayout>} />
         <Route path="/dashboard"  element={<RequireAuth><AppLayout><DashboardPage /></AppLayout></RequireAuth>} />
         <Route path="/notificacions" element={<RequireAuth><AppLayout><NotificationsPage /></AppLayout></RequireAuth>} />
         <Route path="/perfil"     element={<RequireAuth><AppLayout><ProfilePage /></AppLayout></RequireAuth>} />
