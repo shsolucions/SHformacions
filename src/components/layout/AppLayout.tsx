@@ -2,6 +2,7 @@ import React, { type ReactNode } from 'react';
 import { Header } from './Header';
 import { BottomNav } from './BottomNav';
 import { RobotButton } from '../ui/RobotButton';
+import { CartButton } from '../ui/CartButton';
 import { ToastContainer } from '../ui/ToastContainer';
 import { AuthModal } from '../ui/AuthModal';
 
@@ -21,6 +22,7 @@ export function AppLayout({ children, showBottomNav = true }: AppLayoutProps) {
         <div className="px-4 py-5 animate-fade-in">{children}</div>
       </main>
       {showBottomNav && <BottomNav />}
+      <CartButton />
       <RobotButton />
       <ToastContainer />
       <AuthModal />

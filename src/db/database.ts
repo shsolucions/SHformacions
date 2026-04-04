@@ -58,7 +58,7 @@ export async function seedDatabase(): Promise<void> {
   await addCourse({
     name: 'Excel Inicial', category: 'excel', level: 'basic', format: 'presential',
     duration: 10, price: 90, maxStudents: 12, currentStudents: 3, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1',
+    instructor: 'Saïd Hammouda', location: 'Aula 1',
     startDate: now + W, endDate: now + W + M,
     description: 'Primers passos amb Microsoft Excel. Aprèn a crear i gestionar fulls de càlcul des de zero, amb exercicis pràctics del dia a dia.',
     objectives: `Conèixer la interfície d'Excel: cinta, cel·les i llibres de treball
@@ -75,7 +75,7 @@ Imprimir i exportar a PDF`,
   await addCourse({
     name: 'Excel Intermedi', category: 'excel', level: 'intermediate', format: 'hybrid',
     duration: 16, price: 140, maxStudents: 12, currentStudents: 5, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Aprofundeix en Excel amb funcions avançades, taules dinàmiques i eines de productivitat per a l\'entorn professional.',
     objectives: `Funcions SI, SI.ERROR i lògiques (I, O)
@@ -92,7 +92,7 @@ Protecció de cel·les, fulls i llibres`,
   await addCourse({
     name: 'Excel Avançat', category: 'excel', level: 'advanced', format: 'hybrid',
     duration: 20, price: 180, maxStudents: 10, currentStudents: 2, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 3, endDate: now + W * 3 + M * 2,
     description: 'Domina les eines més potents d\'Excel: macros, Power Query, dashboards i automatització. Nivell professional.',
     objectives: `Fórmules matricials i funcions ÍNDEX/COINCIDIR
@@ -112,7 +112,7 @@ Automatització de tasques repetitives`,
   await addCourse({
     name: 'Word Inicial', category: 'word', level: 'basic', format: 'presential',
     duration: 8, price: 75, maxStudents: 12, currentStudents: 4, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2',
+    instructor: 'Saïd Hammouda', location: 'Aula 2',
     startDate: now + W, endDate: now + W + M,
     description: 'Introducció a Microsoft Word per crear documents senzills: cartes, currículums i escrits del dia a dia.',
     objectives: `Conèixer la interfície de Word i la cinta d'opcions
@@ -129,7 +129,7 @@ Guardar en Word i exportar a PDF`,
   await addCourse({
     name: 'Word Intermedi', category: 'word', level: 'intermediate', format: 'presential',
     duration: 12, price: 110, maxStudents: 12, currentStudents: 7, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2',
+    instructor: 'Saïd Hammouda', location: 'Aula 2',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Crea documents professionals de qualitat amb estils, plantilles, taules de contingut i eines de revisió.',
     objectives: `Estils de text i paràgraf: crear i aplicar
@@ -146,7 +146,7 @@ Inserir objectes: gràfics, equacions, icones`,
   await addCourse({
     name: 'Word Avançat', category: 'word', level: 'advanced', format: 'hybrid',
     duration: 10, price: 120, maxStudents: 10, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 2 / Online',
     startDate: now + W * 4, endDate: now + W * 4 + M,
     description: 'Automatitza i professionalitza els teus documents amb macros, formularis, documents mestres i eines avançades.',
     objectives: `Crear plantilles corporatives avançades
@@ -166,7 +166,7 @@ Publicació i compatibilitat de formats`,
   await addCourse({
     name: 'Access Inicial', category: 'access', level: 'basic', format: 'presential',
     duration: 10, price: 95, maxStudents: 10, currentStudents: 2, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1',
+    instructor: 'Saïd Hammouda', location: 'Aula 1',
     startDate: now + W * 3, endDate: now + W * 3 + M,
     description: 'Descobreix les bases de dades relacionals amb Microsoft Access. Crea les teves primeres taules i consultes.',
     objectives: `Conceptes de base de dades relacional
@@ -183,7 +183,7 @@ Informes bàsics amb l'assistent`,
   await addCourse({
     name: 'Access Intermedi', category: 'access', level: 'intermediate', format: 'hybrid',
     duration: 14, price: 130, maxStudents: 10, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 4, endDate: now + W * 4 + M,
     description: 'Aprofundeix en Access amb consultes avançades, formularis, relacions múltiples i importació de dades.',
     objectives: `Relacions entre múltiples taules (1:N, N:M)
@@ -200,7 +200,7 @@ Importar i exportar dades (Excel, CSV)`,
   await addCourse({
     name: 'Access Avançat', category: 'access', level: 'advanced', format: 'hybrid',
     duration: 16, price: 155, maxStudents: 8, currentStudents: 0, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 5, endDate: now + W * 5 + M,
     description: 'Dissenya aplicacions de base de dades professionals amb macros, VBA i gestió multi-usuari.',
     objectives: `Consultes d'acció: afegir, actualitzar, eliminar
@@ -220,7 +220,7 @@ Distribució i empaquetat d'aplicacions`,
   await addCourse({
     name: 'Outlook: Gestió Professional del Correu', category: 'outlook', level: 'intermediate', format: 'online',
     duration: 8, price: 80, maxStudents: 15, currentStudents: 9, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online (Zoom)',
+    instructor: 'Saïd Hammouda', location: 'Online (Zoom)',
     startDate: now + W, endDate: now + W + M / 2,
     description: 'Domina Microsoft Outlook per gestionar el correu, calendari i tasques de forma eficient i professional.',
     objectives: `Configuració del compte i interfície d'Outlook
@@ -242,7 +242,7 @@ Cerca avançada i gestió de l'arxiu`,
   await addCourse({
     name: 'Microsoft 365 Inicial', category: 'cloud', level: 'basic', format: 'online',
     duration: 10, price: 100, maxStudents: 15, currentStudents: 4, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online (Teams)',
+    instructor: 'Saïd Hammouda', location: 'Online (Teams)',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Introducció a Microsoft 365: aprèn a treballar al núvol amb les eines més usades en l\'entorn empresarial.',
     objectives: `Conceptes bàsics de núvol i Microsoft 365
@@ -259,7 +259,7 @@ Bones pràctiques de seguretat digital`,
   await addCourse({
     name: 'Microsoft 365 Intermedi', category: 'cloud', level: 'intermediate', format: 'hybrid',
     duration: 16, price: 150, maxStudents: 12, currentStudents: 3, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Teams',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Teams',
     startDate: now + W * 3, endDate: now + W * 3 + M,
     description: 'Potencia la col·laboració en equip amb Teams avançat, SharePoint, Planner i les eines de productivitat de M365.',
     objectives: `Microsoft Teams avançat: canals, tabs i connectors
@@ -276,7 +276,7 @@ Power Automate: automatitzacions senzilles`,
   await addCourse({
     name: 'Microsoft 365 Avançat per a Empreses', category: 'cloud', level: 'advanced', format: 'hybrid',
     duration: 24, price: 220, maxStudents: 10, currentStudents: 2, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Empresa / Teams',
+    instructor: 'Saïd Hammouda', location: 'Empresa / Teams',
     startDate: now + W * 4, endDate: now + W * 4 + M * 2,
     description: 'Administra i optimitza Microsoft 365 per a l\'empresa. Inclou Power Platform, Azure AD i governança.',
     objectives: `Microsoft 365 Admin Center: gestió d'usuaris i llicències
@@ -296,7 +296,7 @@ Governança i bones pràctiques empresarials`,
   await addCourse({
     name: 'ACTIC Nivell 1 — Certificat Bàsic', category: 'actic', level: 'basic', format: 'presential',
     duration: 30, price: 150, maxStudents: 12, currentStudents: 5, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1',
+    instructor: 'Saïd Hammouda', location: 'Aula 1',
     startDate: now + W, endDate: now + W + M * 2,
     description: 'Preparació oficial per a l\'examen ACTIC Nivell 1 (Certificat Bàsic) de la Generalitat de Catalunya. Supera la prova i acredita les teves competències digitals bàsiques.',
     objectives: `C1 · Cultura, participació i civisme digital: seguretat, privacitat, drets digitals, identitat en línia i participació ciutadana
@@ -313,7 +313,7 @@ Inscripció i procediment per fer la prova oficial`,
   await addCourse({
     name: 'ACTIC Nivell 2 — Certificat Mitjà', category: 'actic', level: 'intermediate', format: 'hybrid',
     duration: 40, price: 200, maxStudents: 12, currentStudents: 3, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 3, endDate: now + W * 3 + M * 3,
     description: 'Preparació completa per a l\'ACTIC Nivell 2 (Certificat Mitjà). Cobreix les 8 competències digitals al nivell 2 exigit per la Generalitat.',
     objectives: `C1 · Cultura digital (N2): seguretat avançada, ciberseguretat, GDPR, identitat digital professional
@@ -330,7 +330,7 @@ C8 · Presentació de continguts (N2): PowerPoint avançat, disseny de presentac
   await addCourse({
     name: 'ACTIC Nivell 3 — Certificat Avançat', category: 'actic', level: 'advanced', format: 'hybrid',
     duration: 30, price: 180, maxStudents: 10, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 1 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 5, endDate: now + W * 5 + M * 2,
     description: 'Preparació per a l\'ACTIC Nivell 3 (Certificat Avançat). Tria 2 o més competències avançades entre C4-C8 i acredita el domini expert.',
     objectives: `C4 · Informació escrita (N3): Word avançat, macros, formularis complexos, documents mestres, publicació professional
@@ -351,7 +351,7 @@ Estratègia i gestió del temps a la prova oficial`,
   await addCourse({
     name: 'IA Inicial: Introducció a la Intel·ligència Artificial', category: 'ia', level: 'basic', format: 'online',
     duration: 12, price: 120, maxStudents: 20, currentStudents: 6, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online (Zoom)',
+    instructor: 'Saïd Hammouda', location: 'Online (Zoom)',
     startDate: now + W, endDate: now + W + M,
     description: 'Descobreix la Intel·ligència Artificial des de zero. Aprèn a usar les eines d\'IA més potents del moment per millorar la teva productivitat personal i professional, sense necessitat de programar.',
     objectives: `Conceptes bàsics d'IA, Machine Learning i IA Generativa
@@ -368,7 +368,7 @@ Casos d'ús reals i pràctiques guiades`,
   await addCourse({
     name: 'IA Avançat: IA per a Empreses i Professionals', category: 'ia', level: 'advanced', format: 'hybrid',
     duration: 20, price: 200, maxStudents: 15, currentStudents: 3, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Empresa / Online',
+    instructor: 'Saïd Hammouda', location: 'Empresa / Online',
     startDate: now + W * 2, endDate: now + W * 2 + M * 2,
     description: 'Implementa solucions d\'IA a la teva empresa. Automatitza processos, analitza dades i crea avantatge competitiu amb les eines d\'IA més avançades del mercat.',
     objectives: `Estratègia d'IA empresarial: com i on implementar-la
@@ -385,7 +385,7 @@ Governança, privacitat i implementació responsable`,
   await addCourse({
     name: 'IA per a Marketing i Comunicació', category: 'ia', level: 'intermediate', format: 'online',
     duration: 8, price: 90, maxStudents: 20, currentStudents: 5, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online',
+    instructor: 'Saïd Hammouda', location: 'Online',
     description: 'Transforma el teu departament de màrqueting amb IA. Crea contingut, campanyes i estratègies més efectives en menys temps.',
     objectives: `Generació de textos per xarxes socials, web i newsletters
 Creació d'imatges i vídeos curts amb IA
@@ -401,7 +401,7 @@ Eines: ChatGPT, Canva IA, Copy.ai, HubSpot IA`,
   await addCourse({
     name: 'IA per a Recursos Humans', category: 'ia', level: 'intermediate', format: 'online',
     duration: 8, price: 90, maxStudents: 20, currentStudents: 2, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online',
+    instructor: 'Saïd Hammouda', location: 'Online',
     description: 'Optimitza els processos d\'RRHH amb IA: selecció de personal, formació, avaluació i gestió del talent de manera més eficient.',
     objectives: `Selecció de personal assistida per IA: criba de CV
 Redacció d'ofertes de treball optimitzades
@@ -417,7 +417,7 @@ Eines: LinkedIn Recruiter IA, Textio, Workday AI`,
   await addCourse({
     name: 'IA per a Finances i Comptabilitat', category: 'ia', level: 'intermediate', format: 'online',
     duration: 8, price: 90, maxStudents: 20, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online',
+    instructor: 'Saïd Hammouda', location: 'Online',
     description: 'Aplica la IA a les finances: automatitza informes, detecta anomalies, millora les previsions i pren millors decisions financeres.',
     objectives: `Automatització de conciliacions bancàries amb IA
 Excel Copilot per a anàlisi financera avançada
@@ -433,7 +433,7 @@ Eines: Copilot per Excel, Power BI IA, QuickBooks IA`,
   await addCourse({
     name: 'IA per a Vendes i Atenció al Client', category: 'ia', level: 'intermediate', format: 'online',
     duration: 8, price: 90, maxStudents: 20, currentStudents: 4, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Online',
+    instructor: 'Saïd Hammouda', location: 'Online',
     description: 'Millora les teves vendes i fidelitza clients amb IA. Des de chatbots fins a personalització avançada i predicció de vendes.',
     objectives: `Chatbots d'atenció al client: configuració i entrenament
 Personalització de l'experiència del client amb IA
@@ -453,7 +453,7 @@ Eines: ChatGPT API, Drift, Intercom IA`,
   await addCourse({
     name: 'PowerPoint Inicial', category: 'powerpoint', level: 'basic',
     format: 'presential', duration: 8, price: 75, maxStudents: 12, currentStudents: 2, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2',
+    instructor: 'Saïd Hammouda', location: 'Aula 2',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Aprèn a crear presentacions visuals atractives amb Microsoft PowerPoint des de zero. Ideal per a professionals que necessiten comunicar idees de forma clara i impactant.',
     targetAudience: `Persones sense coneixements de PowerPoint\nProfessionals que fan presentacions a feina\nEstudiants i autònoms`,
@@ -464,7 +464,7 @@ Eines: ChatGPT API, Drift, Intercom IA`,
   await addCourse({
     name: 'PowerPoint Intermedi', category: 'powerpoint', level: 'intermediate',
     format: 'hybrid', duration: 12, price: 110, maxStudents: 12, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 2 / Online',
     startDate: now + W * 3, endDate: now + W * 3 + M,
     description: 'Crea presentacions professionals que destaquen. Aprèn tècniques de disseny, animacions avançades, gràfics i elements multimèdia per impressionar a qualsevol audiència.',
     targetAudience: `Usuaris amb coneixements bàsics de PowerPoint\nDirectius, comercials i formadors\nProfessionals que fan presentacions sovint`,
@@ -475,7 +475,7 @@ Eines: ChatGPT API, Drift, Intercom IA`,
   await addCourse({
     name: "PowerPoint Avançat: Presentacions d'Impacte", category: 'powerpoint', level: 'advanced',
     format: 'hybrid', duration: 10, price: 130, maxStudents: 10, currentStudents: 0, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Aula 2 / Online',
+    instructor: 'Saïd Hammouda', location: 'Aula 2 / Online',
     startDate: now + W * 5, endDate: now + W * 5 + M,
     description: "Domina PowerPoint al nivell expert. Crea presentacions interactives, automatitzades i de disseny professional comparables als millors estudis de comunicació.",
     targetAudience: `Usuaris avançats de PowerPoint\nDireccions comercials i de màrqueting\nFormadors, coaches i conferenciants`,
@@ -489,7 +489,7 @@ Eines: ChatGPT API, Drift, Intercom IA`,
   await addCourse({
     name: 'Servei de Reparació i Manteniment IT', category: 'it_repair', level: 'basic', format: 'presential',
     duration: 2, price: 60, maxStudents: 1, currentStudents: 0, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Taller SH Solucions',
+    instructor: 'Saïd Hammouda', location: 'Taller SH Solucions',
     description: 'Servei professional de diagnòstic, reparació i manteniment d\'ordinadors, portàtils i dispositius.',
     objectives: `Diagnòstic complet de maquinari i programari
 Neteja física i tèrmica del sistema
@@ -505,7 +505,7 @@ Assessorament sobre actualitzacions i compres`,
   await addCourse({
     name: 'Consultoria IT per a Empreses', category: 'consulting', level: 'advanced', format: 'hybrid',
     duration: 4, price: 150, maxStudents: 5, currentStudents: 1, status: 'active',
-    instructor: 'Saïd Haddouchi', location: 'Empresa / Remot',
+    instructor: 'Saïd Hammouda', location: 'Empresa / Remot',
     description: 'Assessorament personalitzat per a la transformació digital de la teva empresa. Solucions IT a mida.',
     objectives: `Anàlisi de la infraestructura tecnològica actual
 Pla de transformació digital personalitzat
@@ -727,7 +727,7 @@ Casos pràctics: transformació digital real amb IA`,
     await db.courses.add({
       ...course,
       category: 'ia',
-      instructor: 'Saïd Haddouchi',
+      instructor: 'Saïd Hammouda',
       location: course.format === 'presential' ? 'Aula 1' : course.format === 'online' ? 'Online (Zoom)' : 'Aula 1 / Online',
       createdAt: now, updatedAt: now,
     });
@@ -748,7 +748,7 @@ export async function seedPowerPointCourses(): Promise<void> {
   await db.courses.add({
     name: 'PowerPoint Inicial', category: 'powerpoint', level: 'basic',
     format: 'presential', duration: 8, price: 75, maxStudents: 12, currentStudents: 2,
-    status: 'active', instructor: 'Saïd Haddouchi', location: 'Aula 2',
+    status: 'active', instructor: 'Saïd Hammouda', location: 'Aula 2',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Aprèn a crear presentacions visuals atractives amb Microsoft PowerPoint des de zero. Ideal per a professionals que necessiten comunicar idees de forma clara i impactant.',
     targetAudience: `Persones sense coneixements de PowerPoint\nProfessionals que fan presentacions a feina\nEstudiants i autònoms`,
@@ -759,7 +759,7 @@ export async function seedPowerPointCourses(): Promise<void> {
   await db.courses.add({
     name: 'PowerPoint Intermedi', category: 'powerpoint', level: 'intermediate',
     format: 'hybrid', duration: 12, price: 110, maxStudents: 12, currentStudents: 1,
-    status: 'active', instructor: 'Saïd Haddouchi', location: 'Aula 2 / Online',
+    status: 'active', instructor: 'Saïd Hammouda', location: 'Aula 2 / Online',
     startDate: now + W * 3, endDate: now + W * 3 + M,
     description: 'Crea presentacions professionals que destaquen. Aprèn tècniques de disseny, animacions avançades, gràfics i elements multimèdia per impressionar a qualsevol audiència.',
     targetAudience: `Usuaris amb coneixements bàsics de PowerPoint\nDirectius, comercials i formadors\nProfessionals que fan presentacions sovint`,
@@ -770,7 +770,7 @@ export async function seedPowerPointCourses(): Promise<void> {
   await db.courses.add({
     name: 'PowerPoint Avançat: Presentacions d\'Impacte', category: 'powerpoint', level: 'advanced',
     format: 'hybrid', duration: 10, price: 130, maxStudents: 10, currentStudents: 0,
-    status: 'active', instructor: 'Saïd Haddouchi', location: 'Aula 2 / Online',
+    status: 'active', instructor: 'Saïd Hammouda', location: 'Aula 2 / Online',
     startDate: now + W * 5, endDate: now + W * 5 + M,
     description: 'Domina PowerPoint al nivell expert. Crea presentacions interactives, automatitzades i de disseny professional comparables als millors estudis de comunicació.',
     targetAudience: `Usuaris avançats de PowerPoint\nDireccions comercials i de màrqueting\nFormadors, coaches i conferenciants`,

@@ -9,6 +9,7 @@ import { AuthProvider } from './context/AuthContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { seedDatabase, seedIACourses, seedPowerPointCourses } from './db/database';
+import { CartProvider } from './context/CartContext';
 import './index.css';
 
 async function bootstrap() {
@@ -27,11 +28,13 @@ async function bootstrap() {
           <LanguageProvider>
             <ToastProvider>
               <AuthProvider>
+                <CartProvider>
                 <AuthModalProvider>
                   <NotificationProvider>
                     <App />
                   </NotificationProvider>
                 </AuthModalProvider>
+                </CartProvider>
               </AuthProvider>
             </ToastProvider>
           </LanguageProvider>
