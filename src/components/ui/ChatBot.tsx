@@ -6,7 +6,7 @@ interface ChatBotProps { onClose: () => void; }
 
 function RobotAvatar({ size = 28 }: { size?: number }) {
   return (
-    <img src="/robot-icon.png" alt="Assistent"
+    <img src="/SHbot.png" alt="Assistent"
       style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />
   );
 }
@@ -129,7 +129,13 @@ export function ChatBot({ onClose }: ChatBotProps) {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
-      const reply = await sendMessage(messages, text);
+      // Gemini requereix que l'historial comenci amb 'user'
+      // Eliminem els missatges 'model' inicials que van ser generats localment
+      const geminiHistory = [...messages];
+      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+        geminiHistory.shift();
+      }
+      const reply = await sendMessage(geminiHistory, text);
       setMessages((prev) => [...prev, { role: 'model', text: reply }]);
     } catch (err) {
       console.error('Error enviament:', err);

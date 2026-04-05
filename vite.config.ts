@@ -8,7 +8,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: [
-        'robot-icon.png', 'robot-full.png',
+        'robot-icon.png', 'SHbot.png', 'robot-full.png',
         'logo-word.png', 'logo-excel.png', 'logo-access.png',
         'logo-outlook.png', 'logo-actic.png', 'logo-powerpoint.png',
       ],

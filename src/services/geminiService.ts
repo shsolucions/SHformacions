@@ -3,7 +3,7 @@
 const API_KEY   = import.meta.env.VITE_GEMINI_API_KEY  ?? '';
 const SHEET_URL = import.meta.env.VITE_GOOGLE_SHEET_URL ?? '';
 const SHEET_ID  = '1v_w1Gh3K5MiyrlMubPw5pZKXoCjHO85BSq7aR0ka60Q';
-const MODEL     = 'gemini-2.0-flash';
+const MODEL     = 'gemini-1.5-flash';
 
 export interface ChatMessage { role: 'user' | 'model'; text: string; }
 

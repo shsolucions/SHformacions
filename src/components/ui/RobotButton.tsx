@@ -10,9 +10,9 @@ export function RobotButton() {
       {chatOpen && <ChatBot onClose={() => setChatOpen(false)} />}
       <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-2">
 
-        {/* Bombolla text */}
+        {/* Bombolla de text */}
         {hovered && !chatOpen && (
-          <div className="relative animate-slide-up text-white text-xs rounded-2xl rounded-br-sm px-3 py-2 shadow-xl max-w-[160px] text-center leading-snug pointer-events-none border"
+          <div className="relative animate-slide-up text-xs rounded-2xl rounded-br-sm px-3 py-2 shadow-xl max-w-[160px] text-center leading-snug pointer-events-none border"
             style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
             Hola! 👋 Et puc ajudar?
             <div className="absolute bottom-[-5px] right-4 w-2.5 h-2.5 border-r border-b rotate-45"
@@ -20,7 +20,7 @@ export function RobotButton() {
           </div>
         )}
 
-        {/* Botó robot — imatge circular */}
+        {/* Botó SHbot — imatge circular */}
         <button
           onClick={() => setChatOpen(!chatOpen)}
           onMouseEnter={() => setHovered(true)}
@@ -33,7 +33,7 @@ export function RobotButton() {
             <span className="absolute inset-0 rounded-full border-2 border-accent-400 animate-ping opacity-50" />
           )}
 
-          {/* Imatge robot circular */}
+          {/* SHbot circular */}
           <div
             className="relative w-14 h-14 rounded-full overflow-hidden shadow-xl border-2 transition-all duration-300"
             style={{
@@ -44,8 +44,12 @@ export function RobotButton() {
                 : '0 4px 15px rgba(0,0,0,0.3)',
             }}
           >
-            <img src="/robot-icon.png" alt="Assistent Virtual"
-              className="w-full h-full object-cover" draggable={false} />
+            <img
+              src="/SHbot.png"
+              alt="Assistent Virtual SHformacions"
+              className="w-full h-full object-cover"
+              draggable={false}
+            />
           </div>
 
           {/* Punt verd "en línia" */}
