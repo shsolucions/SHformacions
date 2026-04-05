@@ -28,7 +28,7 @@ export function HomePage() {
 
   useEffect(() => {
     courseService.getAll().then((all) => {
-      setFeatured(all.filter((c) => c.status === 'active').slice(0, 4));
+      setFeatured(all.filter((c) => c.status === 'active' && c.category !== 'it_repair').slice(0, 4));
       const c: Record<string, number> = {};
       all.forEach((course) => { c[course.category] = (c[course.category] || 0) + 1; });
       setCounts(c);

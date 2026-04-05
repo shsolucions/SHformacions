@@ -7,11 +7,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['robot-icon.png', 'robot-full.png', 'logo-word.png', 'logo-excel.png', 'logo-access.png', 'logo-outlook.png', 'logo-actic.png', 'logo-powerpoint.png', 'favicon.svg'],
+      includeAssets: [
+        'robot-icon.png', 'robot-full.png',
+        'logo-word.png', 'logo-excel.png', 'logo-access.png',
+        'logo-outlook.png', 'logo-actic.png', 'logo-powerpoint.png',
+      ],
       manifest: {
         name: 'SHformacions',
         short_name: 'SHformacions',
-        description: 'Formació i serveis IT professionals — SH Solucions',
+        description: 'Formacio IT professional — SH Solucions',
         theme_color: '#0EA5E9',
         background_color: '#080808',
         display: 'standalone',
@@ -21,17 +25,35 @@ export default defineConfig({
         icons: [
           {
             src: 'robot-icon.png',
+            sizes: '152x152',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'robot-icon.png',
+            sizes: '167x167',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'robot-icon.png',
+            sizes: '180x180',
+            type: 'image/png',
+            purpose: 'any',
+          },
+          {
+            src: 'robot-icon.png',
             sizes: '192x192',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'any maskable',
           },
           {
             src: 'robot-icon.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable'
-          }
-        ]
+            purpose: 'any maskable',
+          },
+        ],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
@@ -39,17 +61,15 @@ export default defineConfig({
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: 'CacheFirst',
-            options: { cacheName: 'google-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 31536000 } }
+            options: {
+              cacheName: 'google-fonts-cache',
+              expiration: { maxEntries: 10, maxAgeSeconds: 31536000 },
+            },
           },
-          {
-            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
-            handler: 'CacheFirst',
-            options: { cacheName: 'gstatic-fonts-cache', expiration: { maxEntries: 10, maxAgeSeconds: 31536000 } }
-          }
-        ]
+        ],
       },
-      devOptions: { enabled: true }
-    })
+      devOptions: { enabled: true },
+    }),
   ],
-  resolve: { alias: { '@': '/src' } }
+  resolve: { alias: { '@': '/src' } },
 })

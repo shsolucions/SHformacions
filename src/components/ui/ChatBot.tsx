@@ -100,17 +100,11 @@ export function ChatBot({ onClose }: ChatBotProps) {
     if (hasGreeted.current) return;
     hasGreeted.current = true;
     setLoading(true);
-    sendMessage([], 'Inicia la conversa amb la salutació inicial.')
-      .then((text) => setMessages([{ role: 'model', text }]))
-      .catch((err) => {
-        console.error('Error inici xat:', err);
-        // Mostrem la salutació des del fallback si Gemini falla
-        setMessages([{
-          role: 'model',
-          text: `Hola! 👋 Soc el company virtual d'en Saïd 😊, aquí per ajudar-te!\n\nCom et dius?\n\nEn què et puc ajudar avui?\n1️⃣ Microsoft Office (Excel, Word, PowerPoint...)\n2️⃣ Preparació ACTIC\n3️⃣ Intel·ligència Artificial\n4️⃣ Formació per a empreses\n\nEscriu-me directament i t'ajudo! 🎯`,
-        }]);
-      })
-      .finally(() => setLoading(false));
+    // Salutació inicial simple — no cal cridar Gemini, és sempre igual
+    setTimeout(() => {
+      setMessages([{ role: 'model', text: "Hola! 👋 Soc el company virtual d'en Saïd 😊" }]);
+      setLoading(false);
+    }, 600);
   }, []);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); },
@@ -141,7 +135,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
       console.error('Error enviament:', err);
       setMessages((prev) => [...prev, {
         role: 'model',
-        text: 'Ho sento, ha hagut un problema tècnic. Pots contactar-nos directament per WhatsApp i t\'ajudarem de seguida! 😊',
+        text: 'Ho sento, ha hagut un problema tècnic. Torna-ho a provar en uns moments 🙏',
       }]);
     } finally {
       setLoading(false);

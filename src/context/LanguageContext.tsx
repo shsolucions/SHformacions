@@ -23,9 +23,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem('shformacions_lang');
     if (saved === 'ca' || saved === 'es' || saved === 'en') return saved;
-    const browser = navigator.language.slice(0, 2);
-    if (browser === 'ca' || browser === 'es' || browser === 'en') return browser as Language;
-    return 'ca';
+    return 'ca'; // Català per defecte sempre
   });
 
   useEffect(() => {

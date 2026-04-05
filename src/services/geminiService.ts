@@ -1,134 +1,110 @@
-// ── Servei Gemini API — catàleg i instruccions des de Google Sheets ───────────
+// ── Servei Gemini API ─────────────────────────────────────────────────────────
 
 const API_KEY   = import.meta.env.VITE_GEMINI_API_KEY  ?? '';
 const SHEET_URL = import.meta.env.VITE_GOOGLE_SHEET_URL ?? '';
 const SHEET_ID  = '1v_w1Gh3K5MiyrlMubPw5pZKXoCjHO85BSq7aR0ka60Q';
-const MODEL = 'gemini-2.0-flash';
+const MODEL     = 'gemini-2.0-flash';
 
-export interface ChatMessage {
-  role: 'user' | 'model';
-  text: string;
-}
+export interface ChatMessage { role: 'user' | 'model'; text: string; }
 
-// ── Caché (5 minuts) ─────────────────────────────────────────────────────────
-interface Cache { value: string; ts: number; }
-const cache: Record<string, Cache> = {};
+// ── Caché 5 minuts ───────────────────────────────────────────────────────────
+const cache: Record<string, { val: string; ts: number }> = {};
 const CACHE_MS = 5 * 60 * 1000;
 
-// ── Llegir CSV per NOM de pestanya (més fiable que GID) ───────────────────────
-async function fetchSheetByName(sheetName: string): Promise<string[][]> {
-  const key = `sheet_${sheetName}`;
-  if (cache[key] && Date.now() - cache[key].ts < CACHE_MS) {
-    return parseCSV(cache[key].value);
+async function safeSheetFetch(sheetName: string): Promise<string> {
+  if (cache[sheetName] && Date.now() - cache[sheetName].ts < CACHE_MS) {
+    return cache[sheetName].val;
   }
-
-  // Intentem per nom de pestanya codificat
-  const encodedName = encodeURIComponent(sheetName);
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodedName}`;
-
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} per a "${sheetName}"`);
-  const text = await res.text();
-  if (text.includes('<!DOCTYPE') || text.length < 10) {
-    throw new Error(`Resposta HTML en lloc de CSV — el Sheets no és públic o el nom "${sheetName}" no existeix`);
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (text.trimStart().startsWith('<') || text.length < 10) {
+      throw new Error('Sheets no public');
+    }
+    cache[sheetName] = { val: text, ts: Date.now() };
+    return text;
+  } catch (e) {
+    console.warn(`Sheet "${sheetName}" no accessible:`, e);
+    return '';
   }
-  cache[key] = { value: text, ts: Date.now() };
-  return parseCSV(text);
 }
 
 function parseCSV(csv: string): string[][] {
   return csv.split('\n').filter(Boolean).map((line) => {
     const cols: string[] = [];
     let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
+    for (const ch of line) {
       if (ch === '"') { inQ = !inQ; }
       else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
+      else cur += ch;
     }
     cols.push(cur.trim());
     return cols;
   });
 }
 
-// ── Llegir instruccions de la pestanya "tInstruccions" (columna C, fila 2) ───
-async function fetchInstructions(): Promise<string> {
-  try {
-    const rows = await fetchSheetByName('tInstruccions');
-    // Fila 0 = capçalera (Nom | Descripció | Instruccions)
-    // Fila 1 = dades reals — columna 2 = Instruccions
-    const instruccions = rows[1]?.[2] ?? '';
-    if (instruccions.length > 50) {
-      console.log('✅ Instruccions carregades des del Sheets:', instruccions.slice(0, 80) + '...');
-      return instruccions;
-    }
-    throw new Error('La cel·la C2 de tInstruccions és buida o massa curta');
-  } catch (err) {
-    console.warn('⚠️ Instruccions del Sheets no disponibles, usant fallback:', err);
-    return getFallbackInstructions();
+async function getInstructions(): Promise<string> {
+  const csv = await safeSheetFetch('tInstruccions');
+  if (csv) {
+    const rows = parseCSV(csv);
+    const text = rows[1]?.[2] ?? '';
+    if (text.length > 80) { console.log('OK Instruccions de Sheets'); return text; }
   }
+  console.log('INFO Instruccions fallback');
+  return FALLBACK_INSTRUCTIONS;
 }
 
-// ── Llegir catàleg de la pestanya "tCatàlegPreus" ────────────────────────────
-async function fetchCatalog(): Promise<string> {
-  try {
-    const rows = await fetchSheetByName('tCatàlegPreus');
-    // Busquem la fila de capçalera (conté "Nom del Curs")
-    const headerIdx = rows.findIndex((r) => r.some((c) => c.includes('Nom del Curs') || c.includes('Nom')));
-    const dataRows = headerIdx >= 0 ? rows.slice(headerIdx + 1) : rows.slice(1);
-
-    let catalog = 'CATÀLEG ACTUALITZAT DE CURSOS (preus en temps real):\n\n';
-    let lastCat = '';
-
-    for (const cols of dataRows) {
-      const [cat, nom, hores, preu, nivell, modalitat] = cols;
-      if (!nom || nom === 'Nom del Curs' || nom === 'Nom') continue;
-      const catClean = cat?.replace(/^[^\w\u00C0-\u024F]*/u, '').trim() ?? '';
-      if (catClean && catClean !== lastCat) {
-        lastCat = catClean;
-        catalog += `\n── ${catClean} ──\n`;
-      }
-      const parts = [nom, hores, preu, nivell, modalitat].filter(Boolean).join(' | ');
-      catalog += `• ${parts}\n`;
-    }
-    console.log('✅ Catàleg carregat des del Sheets');
-    return catalog;
-  } catch (err) {
-    console.warn('⚠️ Catàleg del Sheets no disponible, usant fallback:', err);
-    return getFallbackCatalog();
+async function getCatalog(): Promise<string> {
+  const csv = await safeSheetFetch('tCatalegPreus');
+  if (!csv) {
+    // Prova tambe amb accent
+    const csv2 = await safeSheetFetch('tCatàlegPreus');
+    if (csv2) return buildCatalogFromCSV(csv2);
+  } else {
+    return buildCatalogFromCSV(csv);
   }
+  console.log('INFO Cataleg fallback');
+  return FALLBACK_CATALOG;
 }
 
-// ── Enviar missatge a Gemini ─────────────────────────────────────────────────
-export async function sendMessage(
-  history: ChatMessage[],
-  newMessage: string
-): Promise<string> {
-  if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY no configurada a Vercel');
+function buildCatalogFromCSV(csv: string): string {
+  const rows = parseCSV(csv);
+  const hi = rows.findIndex((r) => r.some((c) => /Nom|Curs/i.test(c)));
+  const data = hi >= 0 ? rows.slice(hi + 1) : rows.slice(1);
+  let out = 'CATALEG ACTUALITZAT (preus en temps real del Google Sheets):\n';
+  let lastCat = '';
+  for (const [cat, nom, hores, preu, nivell, mod] of data) {
+    if (!nom) continue;
+    const c = (cat ?? '').replace(/^[^\w\u00C0-\u017E]+/u, '').trim();
+    if (c && c !== lastCat) { lastCat = c; out += `\n-- ${c} --\n`; }
+    out += `* ${[nom, hores, preu, nivell, mod].filter(Boolean).join(' | ')}\n`;
+  }
+  console.log('OK Cataleg de Sheets');
+  return out;
+}
 
-  // Carreguem instruccions + catàleg en paral·lel (amb fallback automàtic)
-  const [instruccions, catalog] = await Promise.all([
-    fetchInstructions(),
-    fetchCatalog(),
-  ]);
+// ── Enviar missatge a Gemini ──────────────────────────────────────────────────
+export async function sendMessage(history: ChatMessage[], userText: string): Promise<string> {
+  console.log('API Key:', API_KEY ? `OK (${API_KEY.slice(0, 8)}...)` : 'BUIDA!');
+  if (!API_KEY) throw new Error('VITE_GEMINI_API_KEY no configurada');
 
-  const systemPrompt = `${instruccions}
+  const [instructions, catalog] = await Promise.all([getInstructions(), getCatalog()]);
 
-════════════════════════════════
+  const systemPrompt = `${instructions}
+
+========================================
 ${catalog}
-════════════════════════════════
-
-REGLES ADDICIONALS:
-- Usa SEMPRE els preus exactes del catàleg anterior. MAI inventis preus.
-- Si et pregunten dates: "Ho consultarem i t'avisem aviat 😊"
-- Si et pregunten algo fora del catàleg: "Deixa que ho consulti amb en Saïd 😊"
-- Si l'usuari és empresa: destaca descomptes per volum i Consultoria IT.`;
+========================================
+REGLA CRITICA: Usa SEMPRE els preus exactes del cataleg. MAI inventis preus.
+Si et pregunten dates: "Ho consultarem i t'avisem!"
+Si l'usuari es empresa: destaca descomptes per volum i Consultoria IT.`;
 
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${API_KEY}`;
-
   const contents = [
     ...history.map((m) => ({ role: m.role, parts: [{ text: m.text }] })),
-    { role: 'user' as const, parts: [{ text: newMessage }] },
+    { role: 'user' as const, parts: [{ text: userText }] },
   ];
 
   const res = await fetch(url, {
@@ -142,29 +118,24 @@ REGLES ADDICIONALS:
   });
 
   if (!res.ok) {
-    const errData = await res.json().catch(() => ({})) as { error?: { message?: string; status?: string } };
-    const msg = errData.error?.message ?? `Error ${res.status}`;
-    throw new Error(msg);
+    const err = await res.json().catch(() => ({})) as { error?: { message?: string } };
+    throw new Error(err.error?.message ?? `Gemini error ${res.status}`);
   }
 
-  const data = await res.json() as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[]
-  };
+  const data = await res.json() as { candidates?: { content?: { parts?: { text?: string }[] } }[] };
   const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Resposta buida de Gemini');
   return text;
 }
 
-// ── Guardar conversa al Google Sheet de converses ────────────────────────────
+// ── Guardar conversa al Google Sheet ─────────────────────────────────────────
 export async function saveConversationToSheet(payload: {
-  phone: string; email: string; summary: string;
-  courses: string; fullChat: string;
+  phone: string; email: string; summary: string; courses: string; fullChat: string;
 }): Promise<void> {
   if (!SHEET_URL) return;
   try {
     await fetch(SHEET_URL, {
-      method: 'POST',
-      mode: 'no-cors',
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
@@ -172,44 +143,57 @@ export async function saveConversationToSheet(payload: {
 }
 
 // ── Fallback instruccions ────────────────────────────────────────────────────
-function getFallbackInstructions(): string {
-  return `Ets el Treballador Virtual d'en Saïd Hammouda, assistent comercial especialitzat de SHformacions. Actues com un Director Comercial expert en formació ofimàtica (Microsoft Office), certificació ACTIC i Intel·ligència Artificial.
+const FALLBACK_INSTRUCTIONS = `Ets el Treballador Virtual d'en Said Hammouda, assistent comercial de SHformacions.
+Expert en formacio Microsoft Office, certificacio ACTIC i Intel.ligencia Artificial.
+Proper, calid, professional. Catala per defecte. Breu i directe. Emojis moderats.
 
-PERSONALITAT: Proper, càlid i professional. Mai fred ni robòtic. Enginyós, empàtic i motivador. Parles en CATALÀ per defecte. Si l'usuari escriu en castellà o anglès, t'adaptes immediatament. Ets breu i directe. Emojis moderats.
+FLUX DE CONVERSA (segueix SEMPRE aquest ordre):
 
-SALUTACIÓ INICIAL - comença SEMPRE exactament amb:
-"Hola! 👋 Soc el company virtual d'en Saïd 😊, aquí per ajudar-te i guiar-te de la millor manera possible.
+PAS 1 - Obertura:
+El bot ja ha enviat "Hola! Soc el company virtual d'en Said 😊"
+Quan l'usuari respongui amb qualsevol cosa (hola, bon dia, etc.), pregunta el nom:
+"Molt bonic sentir-te! 😊 Com et dius?"
 
-Com et dius?
+PAS 2 - Quan l'usuari doni el nom:
+Utilitza el seu nom i presenta les opcions:
+"Encantat, [nom]! 😊 En que et puc ajudar avui?
+1 Vull millorar amb eines Microsoft Office (Excel, Word, PowerPoint...)
+2 Vull preparar-me per a l'examen ACTIC de la Generalitat
+3 M'interessa la Intel.ligencia Artificial per al meu treball
+4 Soc empresa i busco formacio per al meu equip
+O explica'm directament en que treballes i t'ajudo a trobar el curs perfecte!"
 
-En què et puc ajudar avui? Tria una opció o escriu-me directament:
-1️⃣ Vull millorar amb eines Microsoft Office (Excel, Word, PowerPoint...)
-2️⃣ Vull preparar-me per a l'examen ACTIC de la Generalitat
-3️⃣ M'interessa la Intel·ligència Artificial per al meu treball
-4️⃣ Soc empresa i busco formació per al meu equip
+PAS 3 - Descoberta (1 pregunta cada vegada, mai dues de cop):
+Pregunta nivell actual, objectiu, particular o empresa. De manera natural.
 
-O si prefereixes, explica'm directament en què treballes i t'ajudo a trobar el curs perfecte 🎯"
+PAS 4 - Recomanacio (1-2 cursos max):
+"Per al teu cas, [nom], et recomano:
+* [Nom curs] - [hores]h - [preu exacte del cataleg]
+=> [Rao breu i personal]"
 
-Quan respongui amb el seu nom, fes-li les preguntes d'una en una de manera natural. No facis totes les preguntes de cop.
+PAS 5 - Tancament:
+"Perfecte, [nom]! 😊 Per enviar-te el pressupost i les properes dates:
+Telefon:
+Correu:
+Aixi en Said es posara en contacte amb tu!"
 
-Al final de la recomanació, demana de manera natural:
-"Per enviar-te el pressupost i les properes dates disponibles 😊
-📱 Telèfon (WhatsApp):
-📧 Correu electrònic:
-Així en Saïd et pot contactar personalment!"`;
-}
+GESTIO OBJECCIONS:
+- Preu alt: explica el valor professional
+- "Ja ho se": proposa nivell intermedi
+- "No tinc temps": destaca online i hibrid
+- "Penso-m'ho": "Cap problema! Et deixo les dades per quan estiguis llest/a 😊"
 
-// ── Fallback catàleg ─────────────────────────────────────────────────────────
-function getFallbackCatalog(): string {
-  return `CATÀLEG DE CURSOS (versió local — activa el Sheets públic per preus en temps real):
+REGLES: No inventis preus. No prometes dates. Usa el nom quan el sapigues. Acaba amb pregunta.`;
 
-── EXCEL ── • Excel Inicial | 10h | 90€ | Bàsic | Presencial • Excel Intermedi | 12h | 140€ | Intermedi | Híbrid • Excel Avançat | 12h | 180€ | Avançat | Híbrid
-── WORD ── • Word Inicial | 8h | 75€ | Bàsic | Presencial • Word Intermedi | 12h | 110€ | Intermedi | Presencial • Word Avançat | 10h | 120€ | Avançat | Híbrid
-── POWERPOINT ── • PowerPoint Inicial | 8h | 75€ | Bàsic | Presencial • PowerPoint Intermedi | 12h | 110€ | Intermedi | Híbrid • PowerPoint Avançat | 10h | 130€ | Avançat | Híbrid
-── ACCESS ── • Access Inicial | 10h | 95€ | Bàsic | Presencial • Access Intermedi | 14h | 130€ | Intermedi | Híbrid • Access Avançat | 16h | 155€ | Avançat | Híbrid
-── OUTLOOK ── • Outlook Professional | 8h | 80€ | Intermedi | Online
-── MICROSOFT 365 ── • Microsoft 365 Inicial | 10h | 100€ | Online • Microsoft 365 Intermedi | 10h | 150€ | Híbrid • Microsoft 365 Avançat | 12h | 220€ | Híbrid
-── INTEL·LIGÈNCIA ARTIFICIAL ── • IA Inicial | 10h | 120€ | Online • IA Avançada | 20h | 220€ | Híbrid • IA Màrqueting | 8h | 150€ | Online • IA RRHH | 8h | 150€ | Online • IA Finances | 8h | 150€ | Online • IA Vendes | 6h | 120€ | Online • IA Direcció | 6h | 160€ | Online
-── ACTIC ── • ACTIC Nivell 1 | 30h | 150€ | Presencial • ACTIC Nivell 2 | 40h | 200€ | Híbrid • ACTIC Nivell 3 | 30h | 180€ | Híbrid
-── CONSULTORIA IT ── • Consultoria IT per a Empreses | 4h | 150€/sessió`;
-}
+// ── Fallback cataleg ─────────────────────────────────────────────────────────
+const FALLBACK_CATALOG = `CATALEG DE CURSOS SHformacions:
+
+-- EXCEL -- * Excel Inicial 10h 90EUR Basic Presencial * Excel Intermedi 12h 140EUR Intermedi Hibrid * Excel Avançat 12h 180EUR Avançat Hibrid
+-- WORD -- * Word Inicial 8h 75EUR Basic Presencial * Word Intermedi 12h 110EUR Intermedi Presencial * Word Avançat 10h 120EUR Avançat Hibrid
+-- POWERPOINT -- * PowerPoint Inicial 8h 75EUR Basic Presencial * PowerPoint Intermedi 12h 110EUR Intermedi Hibrid * PowerPoint Avançat 10h 130EUR Avançat Hibrid
+-- ACCESS -- * Access Inicial 10h 95EUR Basic Presencial * Access Intermedi 14h 130EUR Intermedi Hibrid * Access Avançat 16h 155EUR Avançat Hibrid
+-- OUTLOOK -- * Outlook Professional 8h 80EUR Intermedi Online
+-- MICROSOFT 365 -- * M365 Inicial 10h 100EUR Online * M365 Intermedi 10h 150EUR Hibrid * M365 Avançat 12h 220EUR Hibrid
+-- IA -- * IA Inicial 10h 120EUR Online * IA Avançada 20h 220EUR Hibrid * IA Marketing 8h 150EUR Online * IA RRHH 8h 150EUR Online * IA Finances 8h 150EUR Online * IA Vendes 6h 120EUR Online * IA Direccio 6h 160EUR Online
+-- ACTIC -- * ACTIC N1 30h 150EUR Presencial * ACTIC N2 40h 200EUR Hibrid * ACTIC N3 30h 180EUR Hibrid
+-- CONSULTORIA -- * Consultoria IT 4h 150EUR/sessio`;
