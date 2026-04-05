@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+<meta charset="UTF-8">
+<title>Test API Gemini - SHformacions</title>
+<style>
+  body { font-family: monospace; background: #0a0a0a; color: #0f0; padding: 20px; max-width: 800px; margin: 0 auto; }
+  h1 { color: #0ea5e9; }
+  button { background: #0ea5e9; color: white; border: none; padding: 10px 20px; cursor: pointer; border-radius: 8px; margin: 5px; font-size: 14px; }
+  button:hover { background: #0284c7; }
+  #log { background: #111; padding: 15px; border-radius: 8px; margin-top: 15px; white-space: pre-wrap; font-size: 12px; max-height: 600px; overflow-y: auto; }
+  .ok { color: #22c55e; }
+  .err { color: #ef4444; }
+  .info { color: #0ea5e9; }
+  .msg { color: #fbbf24; }
+</style>
+</head>
+<body>
+<h1>🔬 Test API Gemini - SHformacions</h1>
+<p>Pàgina de diagnòstic. <strong>ESBORRAR DESPRÉS</strong></p>
+
+<button onclick="testKey()">1️⃣ Testar clau API</button>
+<button onclick="testConv1()">2️⃣ Conversa Word (10p)</button>
+<button onclick="testConv2()">3️⃣ Conversa Excel (11p)</button>
+<button onclick="testConv3()">4️⃣ Conversa IA (15p)</button>
+<button onclick="testSheets()">5️⃣ Testar Google Sheets</button>
+<button onclick="clearLog()">🗑️ Netejar</button>
+
+<div id="log">Esperant...</div>
+
+<script>
+const API_KEY = 'AIzaSyB61sipRyfM1oTJA4Cs3ZX9ymuy1uUnUoE';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxajW8iSKdXpCKDIt3xCjYr466gqjnABDhN1mNr8gXLDwmW6985pjB8qOXK6b91aFx-wg/exec';
+const SHEET_ID = '1v_w1Gh3K5MiyrlMubPw5pZKXoCjHO85BSq7aR0ka60Q';
+
+function log(msg, cls = '') {
+  const d = document.getElementById('log');
+  const t = new Date().toLocaleTimeString();
+  d.innerHTML += `<span class="${cls}">[${t}] ${msg}</span>\n`;
+  d.scrollTop = d.scrollHeight;
+}
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+async function geminiCall(messages, systemPrompt) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      system_instruction: { parts: [{ text: systemPrompt }] },
+      contents: messages,
+      generationConfig: { temperature: 0.8, maxOutputTokens: 400 }
+    })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error?.message || `HTTP ${res.status}`);
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'BUIT';
+}
+
+async function testKey() {
+  log('🔑 Testant clau API...', 'info');
+  log(`Clau: ${API_KEY.slice(0,8)}...`, 'info');
+  try {
+    const r = await geminiCall(
+      [{ role: 'user', parts: [{ text: 'Respon "OK" i res més.' }] }],
+      'Ets un assistent. Respon breument.'
+    );
+    log('✅ API FUNCIONA! Resposta: ' + r, 'ok');
+  } catch(e) {
+    log('❌ ERROR: ' + e.message, 'err');
+  }
+}
+
+const SYSTEM = `Ets l'assistent virtual de SHformacions. Respon en català. 
+CATALEG: Word Inicial 8h 75EUR Bàsic Presencial | Word Intermedi 12h 110EUR | Excel Inicial 10h 90EUR | Excel Intermedi 12h 140EUR | Excel Avançat 12h 180EUR | IA Inicial 10h 120EUR | IA Avançada 20h 220EUR
+Quan et pregunten sobre cursos per a un grup, aplica 10% de descompte a partir de 10 persones.
+Ets proper, breu, en català.`;
+
+async function testConv1() {
+  log('\n📚 CONVERSA 1: Word bàsic per a 10 persones', 'info');
+  const hist = [];
+  const turns = [
+    'Hola, m\'interessa un curs de Word bàsic per a 10 persones de la meva empresa',
+    'Sí, és per a personal administratiu que no ha usat mai el Word',
+    'Quin seria el preu total? I podeu fer-lo a les nostres instal·lacions?',
+    'Perfecte! El meu nom és Maria Garcia. El telèfon és 666111222 i el correu maria@empresa.cat'
+  ];
+  for (const msg of turns) {
+    log('👤 Client: ' + msg, 'msg');
+    hist.push({ role: 'user', parts: [{ text: msg }] });
+    try {
+      const r = await geminiCall(hist, SYSTEM);
+      log('🤖 Assistent: ' + r, 'ok');
+      hist.push({ role: 'model', parts: [{ text: r }] });
+      await saveToSheet('666111222', 'maria@empresa.cat', 'Word bàsic 10 persones empresa administrativa', 'Word Inicial');
+    } catch(e) { log('❌ ' + e.message, 'err'); break; }
+  }
+}
+
+async function testConv2() {
+  log('\n📊 CONVERSA 2: Excel per a 11 persones', 'info');
+  const hist = [];
+  const turns = [
+    'Bon dia! Necessito formar 11 persones en Excel. Usen Excel cada dia però volen millorar',
+    'Sí, fan taules i gràfics bàsics però volen aprendre fórmules i taules dinàmiques',
+    'Quant costaria el curs intermedi per a 11 persones?',
+    'Em dic Joan Puig, tel 677222333, correu joan@negoci.com'
+  ];
+  for (const msg of turns) {
+    log('👤 Client: ' + msg, 'msg');
+    hist.push({ role: 'user', parts: [{ text: msg }] });
+    try {
+      const r = await geminiCall(hist, SYSTEM);
+      log('🤖 Assistent: ' + r, 'ok');
+      hist.push({ role: 'model', parts: [{ text: r }] });
+      await saveToSheet('677222333', 'joan@negoci.com', 'Excel intermedi 11 persones', 'Excel Intermedi');
+    } catch(e) { log('❌ ' + e.message, 'err'); break; }
+  }
+}
+
+async function testConv3() {
+  log('\n🤖 CONVERSA 3: IA per a 15 persones', 'info');
+  const hist = [];
+  const turns = [
+    'Hola, voldria saber si teniu cursos d\'intel·ligència artificial per a 15 directius',
+    'Volen aprendre a usar IA per millorar la productivitat. Cap coneixement previ',
+    'I si volen aprofundir més, hi ha nivell avançat? Quin preu tindria per als 15?',
+    'Soc Ana López, tel 688333444, ana.lopez@corporacio.es'
+  ];
+  for (const msg of turns) {
+    log('👤 Client: ' + msg, 'msg');
+    hist.push({ role: 'user', parts: [{ text: msg }] });
+    try {
+      const r = await geminiCall(hist, SYSTEM);
+      log('🤖 Assistent: ' + r, 'ok');
+      hist.push({ role: 'model', parts: [{ text: r }] });
+      await saveToSheet('688333444', 'ana.lopez@corporacio.es', 'IA inicial i avançada 15 directius', 'IA Inicial, IA Avançada');
+    } catch(e) { log('❌ ' + e.message, 'err'); break; }
+  }
+}
+
+async function saveToSheet(phone, email, summary, courses) {
+  try {
+    await fetch(SHEET_URL, {
+      method: 'POST', mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, email, summary, courses, fullChat: summary })
+    });
+    log(`💾 Guardat al Sheets: ${phone} | ${courses}`, 'ok');
+  } catch(e) { log('⚠️ Sheets: ' + e.message, 'err'); }
+}
+
+async function testSheets() {
+  log('\n📊 Testant Google Sheets (catàleg)...', 'info');
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=tCat%C3%A0legPreus`;
+    const res = await fetch(url);
+    const text = await res.text();
+    if (text.startsWith('<')) {
+      log('❌ Sheets NO és públic! Cal compartir-lo com a visualitzador.', 'err');
+    } else {
+      log('✅ Sheets accessible! Primeres línies:', 'ok');
+      log(text.split('\n').slice(0, 5).join('\n'), 'info');
+    }
+  } catch(e) { log('❌ ' + e.message, 'err'); }
+}
+</script>
+</body>
+</html>
