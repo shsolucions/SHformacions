@@ -15,13 +15,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const { contents, system_instruction } = req.body;
 
+    // Si és el primer missatge (historial buit), afegim context extra al system prompt
+    const isFirstUserMessage = contents.length === 1;
+    let finalSystemInstruction = system_instruction;
+    if (isFirstUserMessage && system_instruction?.parts?.[0]?.text) {
+      finalSystemInstruction = {
+        parts: [{
+          text: system_instruction.parts[0].text +
+            '\n\nCONTEXT ACTUAL: Ja has enviat la salutació inicial "Hola! 👋 Soc el company virtual d'en Saïd 😊". ' +
+            'L'usuari acaba d'escriure el seu primer missatge. ' +
+            'La teva ÚNICA resposta ara ha de ser demanar el nom. ' +
+            'Exemple: "Molt de gust, encantat de saludar-te! 😊 Com et dius?" ' +
+            'NO presentes categories ni opcions. NOMÉS demana el nom.'
+        }]
+      };
+    }
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          system_instruction,
+          system_instruction: finalSystemInstruction,
           contents,
           generationConfig: { temperature: 0.85, maxOutputTokens: 500 }
         })
