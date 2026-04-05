@@ -7,55 +7,52 @@ export function RobotButton() {
 
   return (
     <>
-      {/* ── Xat ── */}
       {chatOpen && <ChatBot onClose={() => setChatOpen(false)} />}
-
-      {/* ── Botó robot flotant ── */}
       <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-2">
 
-        {/* Bombolla text hover (quan xat tancat) */}
+        {/* Bombolla text */}
         {hovered && !chatOpen && (
-          <div className="relative animate-slide-up bg-[#1a1a1a] border border-accent-500/40 text-white text-xs rounded-2xl rounded-br-sm px-3 py-2 shadow-xl max-w-[150px] text-center leading-snug pointer-events-none">
+          <div className="relative animate-slide-up text-white text-xs rounded-2xl rounded-br-sm px-3 py-2 shadow-xl max-w-[160px] text-center leading-snug pointer-events-none border"
+            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
             Hola! 👋 Et puc ajudar?
-            <div className="absolute bottom-[-5px] right-4 w-2.5 h-2.5 bg-[#1a1a1a] border-r border-b border-accent-500/40"
-              style={{ transform: 'rotate(45deg)' }} />
+            <div className="absolute bottom-[-5px] right-4 w-2.5 h-2.5 border-r border-b rotate-45"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)' }} />
           </div>
         )}
 
+        {/* Botó robot — imatge circular */}
         <button
           onClick={() => setChatOpen(!chatOpen)}
           onMouseEnter={() => setHovered(true)}
           onMouseLeave={() => setHovered(false)}
           aria-label="Obrir assistent virtual"
-          className="relative w-16 h-20 focus:outline-none"
-          style={{ background: 'none', border: 'none', padding: 0 }}
+          className="relative focus:outline-none"
         >
-          {/* Ombra */}
-          <div className={[
-            'absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-3 rounded-full blur-md transition-all duration-300',
-            hovered || chatOpen ? 'bg-accent-400/50 scale-110' : 'bg-accent-400/20',
-          ].join(' ')} />
+          {/* Anell animat quan el xat és obert */}
+          {chatOpen && (
+            <span className="absolute inset-0 rounded-full border-2 border-accent-400 animate-ping opacity-50" />
+          )}
 
-          {/* Robot */}
-          <img
-            src="/robot-full.png"
-            alt="Assistent Virtual SHformacions"
-            className="w-full h-full object-contain drop-shadow-lg"
-            draggable={false}
+          {/* Imatge robot circular */}
+          <div
+            className="relative w-14 h-14 rounded-full overflow-hidden shadow-xl border-2 transition-all duration-300"
             style={{
-              transition: 'transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              transform: (hovered || chatOpen)
-                ? 'translateY(-6px) scale(1.08) rotate(-3deg)'
-                : 'translateY(0) scale(1) rotate(0deg)',
-              filter: 'drop-shadow(0 4px 12px rgba(14, 165, 233, 0.3))',
+              borderColor: chatOpen ? '#0ea5e9' : 'rgba(14,165,233,0.4)',
+              transform: (hovered || chatOpen) ? 'scale(1.08)' : 'scale(1)',
+              boxShadow: (hovered || chatOpen)
+                ? '0 0 20px rgba(14,165,233,0.5)'
+                : '0 4px 15px rgba(0,0,0,0.3)',
             }}
-          />
+          >
+            <img src="/robot-icon.png" alt="Assistent Virtual"
+              className="w-full h-full object-cover" draggable={false} />
+          </div>
 
-          {/* Badge verd WhatsApp → ara és un punt verd "en línia" */}
-          <div className={[
-            'absolute bottom-2 right-0 w-4 h-4 rounded-full border-2 border-[#080808] transition-colors',
-            chatOpen ? 'bg-green-400' : 'bg-accent-500',
-          ].join(' ')} />
+          {/* Punt verd "en línia" */}
+          <span
+            className="absolute bottom-0.5 right-0.5 w-3.5 h-3.5 rounded-full border-2 border-white"
+            style={{ backgroundColor: chatOpen ? '#22c55e' : '#0ea5e9' }}
+          />
         </button>
       </div>
     </>
