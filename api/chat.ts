@@ -19,14 +19,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const isFirstUserMessage = contents.length === 1;
     let finalSystemInstruction = system_instruction;
     if (isFirstUserMessage && system_instruction?.parts?.[0]?.text) {
+      const context = [
+        '',
+        'CONTEXT ACTUAL: Ja has enviat la salutació inicial.',
+        'L usuari acaba d escriure el seu primer missatge.',
+        'La teva UNICA resposta ara ha de ser demanar el nom.',
+        'Exemple: Molt de gust, encantat de saludar-te! Com et dius?',
+        'NO presentes categories ni opcions. NOMES demana el nom.'
+      ].join('\n');
       finalSystemInstruction = {
         parts: [{
-          text: system_instruction.parts[0].text +
-            '\n\nCONTEXT ACTUAL: Ja has enviat la salutació inicial "Hola! 👋 Soc el company virtual d'en Saïd 😊". ' +
-            'L'usuari acaba d'escriure el seu primer missatge. ' +
-            'La teva ÚNICA resposta ara ha de ser demanar el nom. ' +
-            'Exemple: "Molt de gust, encantat de saludar-te! 😊 Com et dius?" ' +
-            'NO presentes categories ni opcions. NOMÉS demana el nom.'
+          text: system_instruction.parts[0].text + context
         }]
       };
     }
