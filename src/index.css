@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════
+   VARIABLES CSS — canvien automàticament amb el tema
+   ═══════════════════════════════════════════════════════ */
+:root {
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+
+  /* Colors per defecte: FOSC */
+  --bg-page:        #050505;
+  --bg-primary:     #080808;
+  --bg-card:        #111111;
+  --bg-card-hover:  #161616;
+  --bg-input:       #0f0f0f;
+  --bg-nav:         #080808ee;
+  --bg-elevated:    #1a1a1a;
+  --bg-muted:       #1e1e1e;
+
+  --border-base:    #1e1e1e;
+  --border-strong:  #2a2a2a;
+  --border-input:   #2a2a2a;
+
+  --text-primary:   #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-muted:     #71717a;
+  --text-faint:     #3f3f46;
+
+  --accent:         #0ea5e9;
+  color-scheme:     dark;
+}
+
+/* ─── TEMA CLAR ─────────────────────────────────────── */
+.light {
+  --bg-page:        #f1f5f9;
+  --bg-primary:     #f8fafc;
+  --bg-card:        #ffffff;
+  --bg-card-hover:  #f1f5f9;
+  --bg-input:       #ffffff;
+  --bg-nav:         #ffffffee;
+  --bg-elevated:    #f1f5f9;
+  --bg-muted:       #e2e8f0;
+
+  --border-base:    #e2e8f0;
+  --border-strong:  #cbd5e1;
+  --border-input:   #cbd5e1;
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #64748b;
+  --text-faint:     #94a3b8;
+
+  color-scheme: light;
+}
+
+/* ═══════════════════════════════════════════════════════
+   CLASSES UTILITÀRIES QUE USEN LES VARIABLES
+   ═══════════════════════════════════════════════════════ */
+@layer components {
+  /* Fons */
+  .th-bg-page     { background-color: var(--bg-page); }
+  .th-bg-card     { background-color: var(--bg-card); }
+  .th-bg-elevated { background-color: var(--bg-elevated); }
+  .th-bg-input    { background-color: var(--bg-input); }
+  .th-bg-muted    { background-color: var(--bg-muted); }
+  .th-bg-nav      { background-color: var(--bg-nav); }
+
+  /* Vores */
+  .th-border      { border-color: var(--border-base); }
+  .th-border-strong { border-color: var(--border-strong); }
+
+  /* Text */
+  .th-text        { color: var(--text-primary); }
+  .th-text-2      { color: var(--text-secondary); }
+  .th-text-muted  { color: var(--text-muted); }
+  .th-text-faint  { color: var(--text-faint); }
+}
+
+/* ═══════════════════════════════════════════════════════
+   OVERRIDES: substituïm colors hardcodejats amb variables
+   ═══════════════════════════════════════════════════════ */
+
+/* Pàgina i body */
+html.light body,
+html.light #root {
+  background-color: var(--bg-page) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ── Fons de pàgina principals ── */
+.light .bg-\[\#080808\],
+.light .bg-\[\#050505\],
+.light .bg-\[\#060606\] {
+  background-color: var(--bg-page) !important;
+}
+
+/* ── Targetes i panels ── */
+.light .bg-\[\#111\],
+.light .bg-\[\#111111\],
+.light .bg-\[\#0d0d0d\],
+.light .bg-\[\#0f0f0f\],
+.light .bg-\[\#141414\],
+.light .bg-\[\#101010\] {
+  background-color: var(--bg-card) !important;
+}
+
+.light .bg-\[\#1a1a1a\],
+.light .bg-\[\#161616\],
+.light .bg-\[\#181818\],
+.light .bg-\[\#1e1e1e\] {
+  background-color: var(--bg-elevated) !important;
+}
+
+.light .bg-\[\#0D1628\],
+.light .bg-\[\#0a1628\],
+.light .bg-\[\#0f1628\] {
+  background-color: #dbeafe !important;
+}
+
+/* ── Vores ── */
+.light .border-\[\#222\],
+.light .border-\[\#1e1e1e\],
+.light .border-\[\#1a1a1a\] {
+  border-color: var(--border-base) !important;
+}
+.light .border-\[\#2a2a2a\],
+.light .border-\[\#333\] {
+  border-color: var(--border-strong) !important;
+}
+
+/* ── Text — NOTA: text-white dins de gradients/heroes NO s'ha de canviar ── */
+/* Canviem text-white NOMÉS dins de contenidors de fons clar (cards, panels) */
+.light .th-bg-card .text-white,
+.light [style*="var(--bg-card)"] .text-white,
+.light [style*="var(--bg-elevated)"] .text-white { color: var(--text-primary) !important; }
+.light .text-gray-300      { color: #334155 !important; }
+.light .text-gray-400      { color: #475569 !important; }
+.light .text-gray-500      { color: #64748b !important; }
+.light .text-gray-600      { color: #94a3b8 !important; }
+.light .text-gray-700      { color: #cbd5e1 !important; }
+
+/* ── Navegació ── */
+.light .bg-\[\#080808\]\/95,
+.light .bg-\[\#050505\]\/90 {
+  background-color: rgba(255,255,255,0.95) !important;
+  backdrop-filter: blur(16px);
+}
+
+/* ── Inputs i selects ── */
+.light input,
+.light select,
+.light textarea {
+  background-color: var(--bg-input) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--border-input) !important;
+}
+.light input::placeholder,
+.light textarea::placeholder {
+  color: var(--text-faint) !important;
+}
+
+/* ── Modals ── */
+.light .backdrop-blur-sm {
+  background-color: rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ── Hover states ── */
+.light .hover\:bg-white\/5:hover  { background-color: rgba(0,0,0,0.04) !important; }
+.light .hover\:bg-white\/3:hover  { background-color: rgba(0,0,0,0.02) !important; }
+
+/* ── Selects natius ── */
+.light select option {
+  background-color: var(--bg-card) !important;
+  color: var(--text-primary) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   BASE RESETS
+   ═══════════════════════════════════════════════════════ */
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type='number'] { -moz-appearance: textfield; appearance: textfield; }
+  input[type='date']::-webkit-calendar-picker-indicator {
+    filter: invert(0.5) opacity(0.5); cursor: pointer;
+  }
+  .light input[type='date']::-webkit-calendar-picker-indicator {
+    filter: none; opacity: 0.5;
+  }
+  ::selection { background-color: rgba(14, 165, 233, 0.3); color: var(--text-primary); }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   UTILITIES
+   ═══════════════════════════════════════════════════════ */
+@layer utilities {
+  .pb-safe  { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
+  .pt-safe  { padding-top: env(safe-area-inset-top, 0px); }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .line-clamp-3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .font-display { font-family: 'Inter', system-ui, -apple-system, sans-serif; font-weight: 700; }
+  .min-h-touch  { min-height: 44px; }
+  .min-w-touch  { min-width: 44px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   ANIMACIONS
+   ═══════════════════════════════════════════════════════ */
+@keyframes fadeIn    { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes slideUp   { 0% { opacity: 0; transform: translateY(16px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes slideDown { 0% { opacity: 0; transform: translateY(-8px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes robotWave { 0% { transform: rotate(-3deg) translateY(-2px); } 100% { transform: rotate(4deg) translateY(-5px); } }
+
+/* ── Textos sobre fons foscos (gradients, heroes) — sempre blancs ── */
+.text-on-dark,
+.light .text-on-dark {
+  color: #ffffff !important;
+}
+.text-on-dark-muted,
+.light .text-on-dark-muted {
+  color: rgba(255, 255, 255, 0.65) !important;
+}
