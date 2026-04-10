@@ -352,6 +352,8 @@ const ca: Record<string, string> = {
   'nav.admin': 'Admin',
   'whatsapp.message': 'Hola! M\'interessa més informació sobre els vostres cursos i serveis IT.',
   'whatsapp.contact': 'Contactar per WhatsApp',
+  'contact.email': 'shformacio@gmail.com',
+  'contact.phone': '660 137 163',
 
   // Months
   'month.january': 'Gener',

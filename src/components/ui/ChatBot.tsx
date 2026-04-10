@@ -59,15 +59,15 @@ function ContactForm({ onSave, onSkip }: {
           <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="tel" placeholder="Telèfon (WhatsApp)" value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full h-9 pl-8 pr-3 rounded-xl border text-sm outline-none focus:border-accent-500"
-            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }} />
+            className="w-full h-9 pl-8 pr-3 rounded-xl border outline-none focus:border-accent-500"
+            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }} />
         </div>
         <div className="relative">
           <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input type="email" placeholder="Correu electrònic" value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full h-9 pl-8 pr-3 rounded-xl border text-sm outline-none focus:border-accent-500"
-            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }} />
+            className="w-full h-9 pl-8 pr-3 rounded-xl border outline-none focus:border-accent-500"
+            style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }} />
         </div>
         <div className="flex gap-2">
           <button onClick={() => onSave(phone, email)} disabled={!phone && !email}
@@ -215,18 +215,31 @@ Missatge de l'usuari: ${text}`
         </button>
         <button onClick={(e) => {
             e.stopPropagation();
-            // Guardem la conversa al tancar si hi ha missatges
-            if (messages.length > 1) {
+            // Guardem NOMÉS si hi ha conversa real (mínim 4 missatges i l'usuari ha escrit algo útil)
+            const userMessages = messages.filter(m => m.role === 'user');
+            const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
+            const hasRealContent = userMessages.length >= 2 && userText.length > 10;
+
+            if (hasRealContent && !contactSaved) {
+              // Intentem extreure el nom de tots els missatges de l'usuari
+              let detectedName = userName;
+              if (!detectedName) {
+                for (const msg of messages) {
+                  if (msg.role === 'model') {
+                    const match = msg.text.match(/[Ee]ncantat[,!a/]?\s+([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝ][a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüý]+)/);
+                    if (match) { detectedName = match[1]; break; }
+                  }
+                }
+              }
               const fullChat = messages.map((m) =>
-                `${m.role === 'user' ? 'Client' : 'Assistent'}: ${m.text}`
+                `${m.role === 'user' ? (detectedName || 'Client') : 'Assistent'}: ${m.text}`
               ).join('\n---\n');
-              const userText = messages.filter(m => m.role === 'user').map(m => m.text).join(' ').toLowerCase();
-              const keywords = ['excel','word','powerpoint','access','outlook','actic','ia ','cloud','microsoft','consultoria'];
+              const keywords = ['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
               const coursesFound = keywords.filter(k => userText.includes(k)).join(', ') || 'No especificats';
               saveConversationToSheet({
                 phone: '—',
                 email: '—',
-                summary: `Nom: ${userName || 'desconegut'}. ${userText.slice(0, 300)}`,
+                summary: `Nom: ${detectedName || 'desconegut'}. ${userText.slice(0, 300)}`,
                 courses: coursesFound,
                 fullChat,
               });
@@ -262,8 +275,8 @@ Missatge de l'usuari: ${text}`
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
               placeholder="Escriu un missatge..."
-              className="flex-1 h-9 px-3 rounded-xl border text-sm outline-none focus:border-accent-500 transition-colors"
-              style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)' }}
+              className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+              style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
               disabled={loading} />
             <button onClick={handleSend} disabled={!input.trim() || loading}
               className="w-9 h-9 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">

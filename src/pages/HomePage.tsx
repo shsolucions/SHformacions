@@ -71,7 +71,7 @@ export function HomePage() {
               className="flex-1 h-10 bg-accent-500 hover:bg-accent-600 text-white rounded-xl flex items-center justify-center gap-2 text-sm font-semibold transition-colors">
               <BookOpen size={15} />{t('home.browse_courses')}
             </Link>
-            <a href={`https://wa.me/34600000000?text=${encodeURIComponent(t('whatsapp.message'))}`}
+            <a href={`https://wa.me/34660137163?text=${encodeURIComponent(t('whatsapp.message'))}`}
               target="_blank" rel="noopener noreferrer"
               className="h-10 px-4 rounded-xl flex items-center justify-center text-sm font-semibold transition-colors flex-shrink-0"
               style={{ background: 'rgba(37,211,102,0.2)', border: '1px solid rgba(37,211,102,0.4)', color: '#25D366' }}>

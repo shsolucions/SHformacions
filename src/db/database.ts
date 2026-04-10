@@ -579,7 +579,7 @@ Suport i seguiment post-implantació`,
   });
 
   // ── SETTINGS ─────────────────────────────────────────────
-  await db.settings.add({ key: 'whatsapp_number', value: '34600000000' });
+  await db.settings.add({ key: 'whatsapp_number', value: '34660137163' });
   await db.settings.add({ key: 'app_language', value: 'ca' });
   await db.settings.add({ key: 'app_theme', value: 'dark' });
   await db.settings.add({ key: 'app_version', value: '1.0.0' });

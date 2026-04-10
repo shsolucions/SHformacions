@@ -1,4 +1,4 @@
-const DEFAULT_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER ?? '34600000000';
+const DEFAULT_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER ?? '34660137163';
 
 export const whatsappService = {
   openChat(message: string, number?: string): void {
