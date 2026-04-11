@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { CourseFormModal } from '../components/courses/CourseFormModal';
 import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
+const PNG_CATEGORIES = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
 import { formatCurrency, getStatusColor } from '../utils/formatters';
 
@@ -175,7 +176,7 @@ function CategorySection({ category, courses, t, inCart, onCartToggle }: {
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-3">
-        <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'} flex items-center justify-center flex-shrink-0`}>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${PNG_CATEGORIES.includes(category) ? '' : `bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'}`}`}>
           <CourseIcon category={category} size={20} />
         </div>
         <div>
@@ -212,7 +213,7 @@ function CourseCard({ course, t, inCart, onCartToggle }: {
       <Link to={`/cursos/${course.id}`} className="block p-3.5">
         <div className="flex items-start gap-3">
           {/* Logo */}
-          <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'} flex items-center justify-center flex-shrink-0`}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${PNG_CATEGORIES.includes(course.category) ? '' : `bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}`}>
             <CourseIcon category={course.category} size={26} />
           </div>
           <div className="min-w-0 flex-1">

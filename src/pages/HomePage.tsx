@@ -5,6 +5,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { courseService } from '../services/courseService';
 import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
+const PNG_CATS = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
@@ -92,7 +93,7 @@ export function HomePage() {
             const grad = categoryGradients[key] ?? 'from-gray-700 to-gray-900';
             return (
               <Link key={key} to={`/cursos?cat=${key}`}
-                className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
+                className={`${PNG_CATS.includes(key) ? 'bg-white/5' : `bg-gradient-to-br ${grad}`} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
                 style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
                 <CourseIcon category={key} size={26} />
                 <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
