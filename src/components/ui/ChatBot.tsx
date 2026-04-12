@@ -437,6 +437,7 @@ Missatge de l'usuari: ${text}`
 
             <div className="flex items-center gap-1.5 px-3 py-2.5">
               {/* Botó micròfon — ocult si el navegador no el suporta */}
+              {/* Micro + Altaveu junts */}
               {hasSpeechSupport && (
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
@@ -453,15 +454,7 @@ Missatge de l'usuari: ${text}`
                 </button>
               )}
 
-              <input ref={inputRef} type="text" value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu o grava un missatge...'}
-                className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
-                style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
-                disabled={loading} />
-
-              {/* Toggle resposta de veu */}
+              {/* Toggle resposta de veu — al costat del micro */}
               <button
                 onClick={() => {
                   const next = !voiceEnabled;
@@ -477,6 +470,14 @@ Missatge de l'usuari: ${text}`
                 style={!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
                 <Volume2 size={15} className={voiceEnabled ? 'text-accent-500' : ''} />
               </button>
+
+              <input ref={inputRef} type="text" value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu un missatge...'}
+                className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
+                disabled={loading} />
 
               {/* Enviar */}
               <button onClick={handleSend} disabled={!input.trim() || loading}
