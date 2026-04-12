@@ -87,23 +87,9 @@ function CloudSVG({ size }: { size: number }) {
 
 function IASVG({ size }: { size: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="40" height="40" rx="9" fill="#6366F1"/>
-      <circle cx="20" cy="20" r="8" fill="none" stroke="white" strokeWidth="1.5"/>
-      <circle cx="20" cy="12" r="2" fill="white"/>
-      <circle cx="28" cy="16" r="2" fill="white"/>
-      <circle cx="28" cy="24" r="2" fill="white"/>
-      <circle cx="20" cy="28" r="2" fill="white"/>
-      <circle cx="12" cy="24" r="2" fill="white"/>
-      <circle cx="12" cy="16" r="2" fill="white"/>
-      <line x1="20" y1="14" x2="20" y2="20" stroke="white" strokeWidth="1.2"/>
-      <line x1="26.3" y1="17.5" x2="21.7" y2="20" stroke="white" strokeWidth="1.2"/>
-      <line x1="26.3" y1="22.5" x2="21.7" y2="20" stroke="white" strokeWidth="1.2"/>
-      <line x1="20" y1="26" x2="20" y2="20" stroke="white" strokeWidth="1.2"/>
-      <line x1="13.7" y1="22.5" x2="18.3" y2="20" stroke="white" strokeWidth="1.2"/>
-      <line x1="13.7" y1="17.5" x2="18.3" y2="20" stroke="white" strokeWidth="1.2"/>
-      <circle cx="20" cy="20" r="3" fill="white"/>
-    </svg>
+    <img src="/logo-ia.png" width={size} height={size} alt="IA"
+      style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0 }}
+      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
   );
 }
 

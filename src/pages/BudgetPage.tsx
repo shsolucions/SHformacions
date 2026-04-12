@@ -99,9 +99,24 @@ export function BudgetPage() {
       setBudgetSaved(true);
       showToast('Pressupost guardat ✓', 'success');
     } else {
+      // Guardem el pressupost pendent per recuperar-lo despres del login
+      localStorage.setItem('shformacions_pending_budget', JSON.stringify(cartItems));
       openAuthModal('login', () => {
+        // Un cop logejat, recuperem el pressupost pendent
+        const pending = localStorage.getItem('shformacions_pending_budget');
+        if (pending) {
+          // La sessió s'acaba de crear - l'obtenim del localStorage directament
+          const sessionRaw = localStorage.getItem('shformacions_session');
+          if (sessionRaw) {
+            try {
+              const sess = JSON.parse(sessionRaw);
+              localStorage.setItem(`shformacions_saved_${sess.userId}`, pending);
+              localStorage.removeItem('shformacions_pending_budget');
+            } catch { /* continua */ }
+          }
+        }
         setBudgetSaved(true);
-        showToast('Sessió iniciada. Pressupost guardat ✓', 'success');
+        showToast('Pressupost guardat al teu compte ✓', 'success');
       });
     }
   };

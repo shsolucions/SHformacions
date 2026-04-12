@@ -20,12 +20,14 @@ import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/Cou
 import type { Course } from '../types';
 import { formatCurrency, getStatusColor } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';
+import { useSheetPrices } from '../hooks/useSheetPrices';
 
 export function CourseDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { inCart, toggleCart } = useCart();
+  const { getPrice } = useSheetPrices();
   const { t } = useTranslation();
   const { showToast } = useToast();
 
@@ -130,7 +132,7 @@ export function CourseDetailPage() {
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-2xl font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {course.price === 0 ? 'Gratuït' : formatCurrency(course.price)}
+              {getPrice(course.name, course.price) === 0 ? 'Gratuït' : formatCurrency(getPrice(course.name, course.price))}
             </p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
               {isFull
@@ -261,13 +263,13 @@ export function CourseDetailPage() {
           onClick={handleAddToCart}
           className="w-full h-12 rounded-2xl bg-accent-500 hover:bg-accent-600 text-white font-semibold flex items-center justify-center gap-2 transition-all active:scale-95"
         >
-          <ShoppingCart size={18} /> Afegir al cistell — {formatCurrency(course.price)}
+          <ShoppingCart size={18} /> Afegir al cistell — {formatCurrency(getPrice(course.name, course.price))}
         </button>
       )}
       {alreadyInCart && (
         <Link to="/pressupost"
           className="w-full h-12 rounded-2xl bg-green-500 hover:bg-green-600 text-white font-semibold flex items-center justify-center gap-2 transition-all active:scale-95">
-          <Check size={18} /> Veure cistell ({course.price === 0 ? 'Gratuït' : formatCurrency(course.price)})
+          <Check size={18} /> Veure cistell ({getPrice(course.name, course.price) === 0 ? 'Gratuït' : formatCurrency(getPrice(course.name, course.price))})
         </Link>
       )}
 

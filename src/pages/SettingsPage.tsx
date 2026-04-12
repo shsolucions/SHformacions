@@ -258,6 +258,19 @@ export function SettingsPage() {
   );
 }
 
+function BuildInfo() {
+  const d = new Date(__BUILD_TIME__);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const version = `sh${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}.${pad(d.getHours())}${pad(d.getMinutes())}`;
+  const dateStr = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return (
+    <>
+      <InfoRow label="Versió" value={version} />
+      <InfoRow label="Última actualització" value={dateStr} />
+    </>
+  );
+}
+
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm py-1">

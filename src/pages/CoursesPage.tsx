@@ -13,6 +13,7 @@ import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { CourseFormModal } from '../components/courses/CourseFormModal';
 import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/CourseIcon';
+import { useSheetPrices } from '../hooks/useSheetPrices';
 const PNG_CATEGORIES = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
 import { formatCurrency, getStatusColor } from '../utils/formatters';
@@ -198,6 +199,8 @@ function CourseCard({ course, t, inCart, onCartToggle }: {
   inCart: boolean;
   onCartToggle: (c: Course, e: React.MouseEvent) => void;
 }) {
+  const { getPrice } = useSheetPrices();
+  const displayPrice = getPrice(course.name, course.price);
   const seatsLeft = course.maxStudents - course.currentStudents;
   const isFull = seatsLeft <= 0 || course.status === 'full';
 
@@ -241,7 +244,7 @@ function CourseCard({ course, t, inCart, onCartToggle }: {
             <Clock size={11} className="inline mr-0.5" />{course.duration}h
           </span>
           <span className="text-sm font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
-            {course.price === 0 ? 'Gratuït' : formatCurrency(course.price)}
+            {displayPrice === 0 ? 'Gratuït' : formatCurrency(displayPrice)}
           </span>
         </div>
         {/* Botó cistell — directament a la targeta, sense anar al detall */}

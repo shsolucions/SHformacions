@@ -156,10 +156,13 @@ export function HomePage() {
 }
 
 function AppVersionBadge() {
+  const d = new Date(__BUILD_TIME__);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const version = `sh${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}.${pad(d.getHours())}${pad(d.getMinutes())}`;
   return (
     <div className="flex justify-end pt-2 pb-1 pr-1">
       <span className="text-[9px] select-none" style={{ color: 'var(--text-faint)', opacity: 0.45 }}>
-        sh2026.04.12.1052 · Saïd Hammouda · SH Formació
+        {version} · Saïd Hammouda · SH Formació
       </span>
     </div>
   );

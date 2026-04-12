@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, Phone, Mail, Save, ChevronDown } from 'lucide-react';
+import { X, Send, Loader2, Phone, Mail, Save, ChevronDown, Mic, MicOff, Volume2 } from 'lucide-react';
 import { sendMessage, saveConversationToSheet, type ChatMessage } from '../../services/geminiService';
 
 interface ChatBotProps { onClose: () => void; }
@@ -84,6 +84,16 @@ function ContactForm({ onSave, onSkip }: {
   );
 }
 
+// ── Tipus SpeechRecognition (API del navegador) ──────────────────────────────
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    SpeechRecognition: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    webkitSpeechRecognition: any;
+  }
+}
+
 export function ChatBot({ onClose }: ChatBotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
@@ -93,6 +103,12 @@ export function ChatBot({ onClose }: ChatBotProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [userName, setUserName] = useState<string>('');
   const [awaitingName, setAwaitingName] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasGreeted = useRef(false);
@@ -128,6 +144,138 @@ export function ChatBot({ onClose }: ChatBotProps) {
     }
   }, [messages, contactSaved]);
 
+  // ── Detectar idioma actual de l'app per TTS ─────────────────────────────────
+  // Prioritats de veu per idioma (codi IETF)
+  const VOICE_PREFS: Record<string, string[]> = {
+    ca: ['ca-ES', 'ca_ES', 'ca', 'es-ES', 'es'],
+    es: ['es-ES', 'es_ES', 'es', 'ca-ES'],
+    en: ['en-GB', 'en-US', 'en'],
+    fr: ['fr-FR', 'fr_FR', 'fr'],
+  };
+
+  // Obtenim la llista de veus (Safari les carrega async)
+  const getVoices = (): Promise<SpeechSynthesisVoice[]> =>
+    new Promise(resolve => {
+      const v = window.speechSynthesis?.getVoices() ?? [];
+      if (v.length > 0) { resolve(v); return; }
+      // Safari carrega les veus de manera asíncrona
+      const handler = () => { resolve(window.speechSynthesis.getVoices()); };
+      window.speechSynthesis?.addEventListener('voiceschanged', handler, { once: true });
+      // Timeout de seguretat per si no dispara l'event
+      setTimeout(() => resolve(window.speechSynthesis?.getVoices() ?? []), 1000);
+    });
+
+  // Detecta l'idioma del text per triar la veu correcta
+  const detectLang = (text: string): string => {
+    const t = text.toLowerCase();
+    if (/\b(bonjour|merci|oui|non|vous|je|est|les|des)\b/.test(t)) return 'fr';
+    if (/\b(hello|thank|please|yes|no|course|want|need)\b/.test(t)) return 'en';
+    if (/\b(hola|gracias|sí|no|quiero|puedo|tiene|precio)\b/.test(t)) return 'es';
+    return 'ca'; // Català per defecte
+  };
+
+  const speak = async (text: string) => {
+    if (!voiceEnabled) return;
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    synth.cancel();
+
+    // Netegem el text: eliminem Markdown i caràcters no parlables
+    const clean = text
+      .replace(/[*#_`~]/g, '')
+      .replace(/https?:\/\/\S+/g, '')   // eliminem URLs
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+
+    const lang = detectLang(clean);
+    const prefs = VOICE_PREFS[lang] ?? ['ca-ES'];
+    const voices = await getVoices();
+
+    // Triem la millor veu disponible
+    let chosen: SpeechSynthesisVoice | null = null;
+    for (const pref of prefs) {
+      chosen = voices.find(v =>
+        v.lang === pref || v.lang.startsWith(pref.split('-')[0])
+      ) ?? null;
+      if (chosen) break;
+    }
+
+    const utter = new SpeechSynthesisUtterance(clean);
+    if (chosen) utter.voice = chosen;
+    utter.lang = chosen?.lang ?? prefs[0];
+    utter.rate = lang === 'ca' ? 0.92 : 0.95; // Català una mica més lent per claredat
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    utter.onstart = () => setIsSpeaking(true);
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+
+    // Safari iOS: cal petita pausa per evitar que es talli la veu
+    setTimeout(() => synth.speak(utter), 50);
+  };
+
+  // ── Micròfon: reconeixement de veu (compatible Safari/Chrome) ─────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getSR = (): any => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+  const RECOG_LANGS: Record<string, string> = {
+    ca: 'ca-ES', es: 'es-ES', en: 'en-GB', fr: 'fr-FR',
+  };
+  const [recogLang, setRecogLang] = useState<string>('ca');
+
+  const startRecording = () => {
+    const SR = getSR();
+    if (!SR) {
+      // Safari iOS no suporta WebSpeech - missatge amigable
+      alert('Per usar el micròfon necessites Safari iOS 14.5+ o Chrome. Comprova els permisos del micròfon a Configuració.');
+      return;
+    }
+    // Aturem qualsevol reconeixement anterior
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* ignorem */ }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rec: any = new SR();
+    recognitionRef.current = rec;
+    rec.lang = RECOG_LANGS[recogLang] ?? 'ca-ES';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onresult = (e: any) => {
+      const transcript: string = e.results?.[0]?.[0]?.transcript ?? '';
+      if (transcript.trim()) setInput(prev => prev ? prev + ' ' + transcript : transcript);
+      setIsRecording(false);
+    };
+    rec.onerror = (e: any) => {
+      console.warn('SpeechRecognition error:', e.error);
+      if (e.error === 'not-allowed') {
+        alert('Micròfon no autoritzat. Ves a Configuració > Safari > Micròfon i activa el permís.');
+      }
+      setIsRecording(false);
+    };
+    rec.onend = () => setIsRecording(false);
+
+    try {
+      rec.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.warn('No s\'ha pogut iniciar el micròfon:', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* ignorem */ }
+    }
+    setIsRecording(false);
+  };
+
+  const hasSpeechSupport = !!getSR();
+
   const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || loading) return;
@@ -154,6 +302,7 @@ Missatge de l'usuari: ${text}`
         : text;
       const reply = await sendMessage(geminiHistory, textToSend);
       setMessages((prev) => [...prev, { role: 'model', text: reply }]);
+      speak(reply);
     } catch (err) {
       console.error('Error enviament:', err);
       setMessages((prev) => [...prev, {
@@ -231,8 +380,8 @@ Missatge de l'usuari: ${text}`
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                  system_instruction: { parts: [{ text: "Ets un assistent que genera resums de converses comercials. Respon UNICAMENT amb un resum en 1-2 frases que contingui: nom del client (si se sap), curs o tema d'interes, i si ha deixat dades de contacte. Exemple: Joan Puig interessat en Excel Intermedi per a 5 persones. Ha deixat el telefon 666123456." }] },
-                  contents: [{ role: 'user', parts: [{ text: `Resumeix aquesta conversa en 1-2 frases:\n${fullChat}` }] }]
+                  system_instruction: { parts: [{ text: "Analitza la conversa i escriu UN RESUM de maxim 2 frases. Format: [Nom client] interessat en [curs/tema] per a [N persones]. [Si ha deixat contacte: Ha deixat el telefon/correu]. Si no se sap el nom posa 'Client'. Exemple: Maria interessada en Word Inicial per a 10 persones empresa. Ha deixat el correu maria@empresa.cat. IMPORTANT: nomes el resum, sense cap altra cosa." }] },
+                  contents: [{ role: 'user', parts: [{ text: `CONVERSA:\n${fullChat}\n\nESCRIU EL RESUM:` }] }]
                 })
               }).then(r => r.json()).then(d => {
                 const resum = d.text || `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`;
@@ -265,22 +414,78 @@ Missatge de l'usuari: ${text}`
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
-          <div className="flex items-center gap-2 px-3 py-2.5 border-t flex-shrink-0"
-            style={{ borderColor: 'var(--border-base)' }}>
-            <input ref={inputRef} type="text" value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-              placeholder="Escriu un missatge..."
-              className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
-              style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
-              disabled={loading} />
-            <button onClick={handleSend} disabled={!input.trim() || loading}
-              className="w-9 h-9 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">
-              {loading
-                ? <Loader2 size={15} className="text-white animate-spin" />
-                : <Send size={15} className="text-white" />}
-            </button>
+          {/* Input + controls de veu */}
+          <div className="flex flex-col border-t flex-shrink-0" style={{ borderColor: 'var(--border-base)' }}>
+
+            {/* Selector d'idioma quan el micròfon és actiu */}
+            {isRecording && (
+              <div className="flex items-center gap-1.5 px-3 pt-2">
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Idioma:</span>
+                {(['ca','es','en','fr'] as const).map(lang => (
+                  <button key={lang}
+                    onClick={() => setRecogLang(lang)}
+                    className={[
+                      'px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-colors',
+                      recogLang === lang ? 'bg-accent-500 text-white' : 'border',
+                    ].join(' ')}
+                    style={recogLang !== lang ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
+                    {lang === 'ca' ? '🇪🇸 CAT' : lang === 'es' ? '🇪🇸 ESP' : lang === 'en' ? '🇬🇧 ENG' : '🇫🇷 FRA'}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center gap-1.5 px-3 py-2.5">
+              {/* Botó micròfon — ocult si el navegador no el suporta */}
+              {hasSpeechSupport && (
+                <button
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={loading}
+                  title={isRecording ? 'Atura gravació' : 'Gravar veu'}
+                  className={[
+                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0',
+                    isRecording ? 'bg-red-500 animate-pulse' : 'border hover:bg-accent-500/10',
+                  ].join(' ')}
+                  style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
+                  {isRecording
+                    ? <MicOff size={15} className="text-white" />
+                    : <Mic size={15} />}
+                </button>
+              )}
+
+              <input ref={inputRef} type="text" value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
+                placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu o grava un missatge...'}
+                className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
+                disabled={loading} />
+
+              {/* Toggle resposta de veu */}
+              <button
+                onClick={() => {
+                  const next = !voiceEnabled;
+                  setVoiceEnabled(next);
+                  if (!next) { window.speechSynthesis?.cancel(); setIsSpeaking(false); }
+                }}
+                title={voiceEnabled ? 'Desactivar veu del bot' : 'Activar veu del bot'}
+                className={[
+                  'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border',
+                  voiceEnabled ? 'bg-accent-500/20 border-accent-500' : '',
+                  isSpeaking ? 'animate-pulse' : '',
+                ].join(' ')}
+                style={!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
+                <Volume2 size={15} className={voiceEnabled ? 'text-accent-500' : ''} />
+              </button>
+
+              {/* Enviar */}
+              <button onClick={handleSend} disabled={!input.trim() || loading}
+                className="w-9 h-9 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">
+                {loading
+                  ? <Loader2 size={15} className="text-white animate-spin" />
+                  : <Send size={15} className="text-white" />}
+              </button>
+            </div>
           </div>
         </>
       )}
