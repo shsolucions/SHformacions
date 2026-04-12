@@ -61,7 +61,6 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: [],
-        runtimeCaching: [],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
