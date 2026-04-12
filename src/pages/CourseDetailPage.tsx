@@ -16,7 +16,7 @@ import { Card } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { CourseFormModal } from '../components/courses/CourseFormModal';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
-import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
+import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/CourseIcon';
 import type { Course } from '../types';
 import { formatCurrency, getStatusColor } from '../utils/formatters';
 import { formatDate } from '../utils/dateUtils';

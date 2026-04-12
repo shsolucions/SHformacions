@@ -18,7 +18,7 @@ export function AppLayout({ children, showBottomNav = true }: AppLayoutProps) {
       style={{ backgroundColor: 'var(--bg-page)', color: 'var(--text-primary)' }}
     >
       <Header />
-      <main className="pt-14 pb-20 min-h-screen max-w-lg mx-auto">
+      <main className="pb-20 min-h-screen max-w-lg mx-auto" style={{ paddingTop: "calc(3.5rem + env(safe-area-inset-top, 0px))" }}>
         <div className="px-4 py-5 animate-fade-in">{children}</div>
       </main>
       {showBottomNav && <BottomNav />}

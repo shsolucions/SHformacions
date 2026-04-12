@@ -25,7 +25,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'L usuari acaba d escriure el seu primer missatge.',
         'La teva UNICA resposta ara ha de ser demanar el nom.',
         'Exemple: Molt de gust, encantat de saludar-te! Com et dius?',
-        'NO presentes categories ni opcions. NOMES demana el nom.'
+        'NO presentes categories ni opcions. NOMES demana el nom.',
+        '',
+        'REGLA IMPORTANT SOBRE GRUPS:',
+        'Si l usuari menciona que son 10 o mes persones, menciona SEMPRE:',
+        '- 10-19 persones: 10% de descompte sobre el preu total',
+        '- 20 o mes persones: 15% de descompte',
+        'Exemple: "Per a un grup de 12 persones, apliquem un 10% de descompte!"'
       ].join('\n');
       finalSystemInstruction = {
         parts: [{

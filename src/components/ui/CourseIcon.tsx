@@ -149,6 +149,16 @@ export function CourseIcon({ category, size = 40, className = '' }: CourseIconPr
   }
 }
 
+// ─── Colors de fons per logos PNG (funcionen en mode clar I fosc) ───────────
+export const pngBgColors: Record<string, string> = {
+  excel:      '#e8f5e9',   // verd molt clar
+  word:       '#e3f2fd',   // blau molt clar
+  powerpoint: '#fce4ec',   // vermell molt clar
+  access:     '#fce4ec',   // vermell molt clar
+  outlook:    '#e3f2fd',   // blau molt clar
+  actic:      '#fff8e1',   // groc molt clar
+};
+
 // ─── Gradients per categoria ──────────────────────────────────────────────────
 export const categoryGradients: Record<string, string> = {
   excel:      'from-[#1a4a2e] to-[#107C41]',

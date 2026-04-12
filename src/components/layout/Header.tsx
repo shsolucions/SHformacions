@@ -48,10 +48,10 @@ export function Header() {
 
   return (
     <header
-      className="fixed top-0 left-0 right-0 z-40 h-14 backdrop-blur-xl border-b"
-      style={{ backgroundColor: 'var(--bg-nav)', borderColor: 'var(--border-base)' }}
+      className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl border-b"
+      style={{ backgroundColor: 'var(--bg-nav)', borderColor: 'var(--border-base)', paddingTop: 'env(safe-area-inset-top, 0px)' }}
     >
-      <div className="h-full max-w-lg mx-auto px-3 flex items-center justify-between gap-2">
+      <div className="h-14 max-w-lg mx-auto px-3 flex items-center justify-between gap-2">
 
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 select-none flex-shrink-0">

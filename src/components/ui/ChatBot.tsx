@@ -215,33 +215,30 @@ Missatge de l'usuari: ${text}`
         </button>
         <button onClick={(e) => {
             e.stopPropagation();
-            // Guardem NOMÉS si hi ha conversa real (mínim 4 missatges i l'usuari ha escrit algo útil)
             const userMessages = messages.filter(m => m.role === 'user');
-            const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
-            const hasRealContent = userMessages.length >= 2 && userText.length > 10;
+            const hasRealContent = userMessages.length >= 2 && userMessages.map(m => m.text).join(' ').length > 15;
 
             if (hasRealContent && !contactSaved) {
-              // Intentem extreure el nom de tots els missatges de l'usuari
-              let detectedName = userName;
-              if (!detectedName) {
-                for (const msg of messages) {
-                  if (msg.role === 'model') {
-                    const match = msg.text.match(/[Ee]ncantat[,!a/]?\s+([A-ZÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝ][a-zàáâãäåæçèéêëìíîïðñòóôõöøùúûüý]+)/);
-                    if (match) { detectedName = match[1]; break; }
-                  }
-                }
-              }
               const fullChat = messages.map((m) =>
-                `${m.role === 'user' ? (detectedName || 'Client') : 'Assistent'}: ${m.text}`
-              ).join('\n---\n');
+                `${m.role === 'user' ? (userName || 'Client') : 'Assistent'}: ${m.text}`
+              ).join('\n');
+              const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
               const keywords = ['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
               const coursesFound = keywords.filter(k => userText.includes(k)).join(', ') || 'No especificats';
-              saveConversationToSheet({
-                phone: '—',
-                email: '—',
-                summary: `Nom: ${detectedName || 'desconegut'}. ${userText.slice(0, 300)}`,
-                courses: coursesFound,
-                fullChat,
+
+              // Demanem a Gemini un resum real de la conversa
+              fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  system_instruction: { parts: [{ text: "Ets un assistent que genera resums de converses comercials. Respon UNICAMENT amb un resum en 1-2 frases que contingui: nom del client (si se sap), curs o tema d'interes, i si ha deixat dades de contacte. Exemple: Joan Puig interessat en Excel Intermedi per a 5 persones. Ha deixat el telefon 666123456." }] },
+                  contents: [{ role: 'user', parts: [{ text: `Resumeix aquesta conversa en 1-2 frases:\n${fullChat}` }] }]
+                })
+              }).then(r => r.json()).then(d => {
+                const resum = d.text || `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`;
+                saveConversationToSheet({ phone: '—', email: '—', summary: resum, courses: coursesFound, fullChat });
+              }).catch(() => {
+                saveConversationToSheet({ phone: '—', email: '—', summary: `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`, courses: coursesFound, fullChat });
               });
             }
             onClose();
