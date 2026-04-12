@@ -295,8 +295,19 @@ export function ChatBot({ onClose }: ChatBotProps) {
       // Si és el primer missatge (historial buit), diem a Gemini que ja ha saludat
       // i que OBLIGATÒRIAMENT ha de demanar el nom abans de res
       const isFirstMessage = geminiHistory.length === 0;
+
+      // Detectem l'idioma del missatge de l'usuari
+      const detectUserLang = (t: string): string => {
+        const lower = t.toLowerCase();
+        if (/\b(bonjour|merci|oui|non|vous|je suis|s'il vous)\b/.test(lower)) return 'francès';
+        if (/\b(hello|thank|please|yes|no|i want|i need|hi there)\b/.test(lower)) return 'anglès';
+        if (/\b(hola|gracias|sí|cómo|quiero|puedo|tienes|precio|información|buenos|necesito)\b/.test(lower)) return 'castellà';
+        return 'català';
+      };
+      const userLang = detectUserLang(text);
+
       const textToSend = isFirstMessage
-        ? `[CONTEXT: Ja has saludat amb "Hola! Soc el company virtual d'en Saïd". L'usuari acaba d'escriure el seu primer missatge. OBLIGATORI: respon demanant el nom de l'usuari. No presentes opcions ni categories. Només demana el nom.]
+        ? `[CONTEXT: Ja has saludat. L'usuari acaba d'escriure el seu primer missatge EN ${userLang.toUpperCase()}. OBLIGATORI: respon SEMPRE en ${userLang}. Demana el nom de l'usuari. No presentes opcions ni categories. Només demana el nom.]
 
 Missatge de l'usuari: ${text}`
         : text;
