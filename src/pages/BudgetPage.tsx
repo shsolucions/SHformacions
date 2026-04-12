@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingCart, Trash2, ArrowRight, Save, BookOpen, Euro, Clock, CheckCircle, Users, Minus, Plus } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ShoppingCart, Trash2, ArrowRight, Save, BookOpen, Euro, Clock, CheckCircle, Minus, Plus } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -9,29 +9,24 @@ import { useTranslation } from '../context/LanguageContext';
 import { courseService } from '../services/courseService';
 import { getSheetPrices } from '../services/sheetsService';
 import { whatsappService } from '../services/whatsappService';
-import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/CourseIcon';
+import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import type { Course } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
-const PNG_CATS = ['excel','word','powerpoint','access','outlook','actic'];
-
 export function BudgetPage() {
   const { t } = useTranslation();
   const { session } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { showToast } = useToast();
-  const navigate = useNavigate();
-  const { cartIds, removeFromCart, clearCart, cartCount } = useCart();
+  const { cartItems, cartIds, removeFromCart, setQty, clearCart, cartCount } = useCart();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [budgetSaved, setBudgetSaved] = useState(false);
-  const [persons, setPersons] = useState(1);
   const [sheetPrices, setSheetPrices] = useState<Record<string, number>>({});
 
-  // Carrega cursos
   const loadCourses = useCallback(() => {
     if (cartIds.length === 0) { setCourses([]); setLoading(false); return; }
     setLoading(true);
@@ -44,7 +39,6 @@ export function BudgetPage() {
 
   useEffect(() => { loadCourses(); }, [loadCourses]);
 
-  // Carrega preus del Sheets en temps real
   useEffect(() => {
     getSheetPrices().then(prices => {
       const map: Record<string, number> = {};
@@ -53,23 +47,28 @@ export function BudgetPage() {
     }).catch(() => {});
   }, []);
 
-  // Obté el preu d'un curs: primer mira el Sheets, sinó usa el de la BD
   const getCoursePrice = (course: Course): number => {
     const name = course.name.toLowerCase();
-    const sheetEntry = Object.entries(sheetPrices).find(([k]) =>
+    const entry = Object.entries(sheetPrices).find(([k]) =>
       k.toLowerCase().includes(name) || name.includes(k.toLowerCase())
     );
-    return sheetEntry ? sheetEntry[1] : course.price;
+    return entry ? entry[1] : course.price;
   };
 
-  // Descompte: >10 persones = 10%, >20 = 15%
-  const getDiscount = (p: number) => p >= 20 ? 0.15 : p >= 10 ? 0.10 : 0;
-  const discount = getDiscount(persons);
-  const pricePerPerson = courses.reduce((s, c) => s + getCoursePrice(c), 0);
-  const subtotalBrut = pricePerPerson * persons;
-  const descompte = subtotalBrut * discount;
-  const subtotal = subtotalBrut - descompte;
-  const totalHours = courses.reduce((s, c) => s + c.duration, 0);
+  const getQty = (id: number) => cartItems.find(i => i.id === id)?.qty ?? 1;
+
+  // Descompte per curs individual (per la quantitat de persones d'aquell curs)
+  const getDiscount = (qty: number) => qty >= 20 ? 0.15 : qty >= 10 ? 0.10 : 0;
+
+  const getLineTotal = (course: Course) => {
+    const qty = getQty(course.id!);
+    const price = getCoursePrice(course);
+    const disc = getDiscount(qty);
+    return price * qty * (1 - disc);
+  };
+
+  const subtotal = courses.reduce((s, c) => s + getLineTotal(c), 0);
+  const totalHours = courses.reduce((s, c) => s + c.duration * getQty(c.id!), 0);
 
   const handleRemove = (course: Course) => {
     removeFromCart(course.id!);
@@ -78,15 +77,17 @@ export function BudgetPage() {
 
   const handleWhatsApp = () => {
     if (courses.length === 0) return;
-    const lines = courses.map((c) =>
-      `  • ${c.name} — ${formatCurrency(getCoursePrice(c))}/persona (${c.duration}h)`
-    ).join('\n');
-    const discountLine = discount > 0 ? `\n🎉 Descompte ${(discount*100).toFixed(0)}% per grup: -${formatCurrency(descompte)}` : '';
+    const lines = courses.map((c) => {
+      const qty = getQty(c.id!);
+      const price = getCoursePrice(c);
+      const disc = getDiscount(qty);
+      const total = getLineTotal(c);
+      const discText = disc > 0 ? ` (descompte ${(disc*100).toFixed(0)}%)` : '';
+      return `  • ${c.name} — ${qty} persona${qty > 1 ? 'es' : ''} × ${formatCurrency(price)}${discText} = ${formatCurrency(total)} (${c.duration}h)`;
+    }).join('\n');
     const msg =
       `Hola! M'interessa realitzar els cursos següents:\n\n${lines}` +
-      `\n\n👥 Nombre de persones: ${persons}` +
-      discountLine +
-      `\n💰 TOTAL: ${formatCurrency(subtotal)} · ${totalHours}h de formació\n\n` +
+      `\n\n💰 TOTAL: ${formatCurrency(subtotal)} · ${totalHours}h de formació\n\n` +
       `Podríeu confirmar disponibilitat i properes dates? Gràcies!`;
     whatsappService.openChat(msg);
     showToast('Pressupost enviat per WhatsApp!', 'success');
@@ -94,10 +95,9 @@ export function BudgetPage() {
 
   const handleSave = () => {
     if (session) {
-      const key = `shformacions_saved_${session.userId}`;
-      localStorage.setItem(key, JSON.stringify({ cartIds, persons }));
+      localStorage.setItem(`shformacions_saved_${session.userId}`, JSON.stringify(cartItems));
       setBudgetSaved(true);
-      showToast('Pressupost guardat al teu compte ✓', 'success');
+      showToast('Pressupost guardat ✓', 'success');
     } else {
       openAuthModal('login', () => {
         setBudgetSaved(true);
@@ -138,76 +138,83 @@ export function BudgetPage() {
         </button>
       </div>
 
-      {/* ── NOMBRE DE PERSONES ── */}
-      <div className="rounded-2xl border p-4 flex items-center justify-between gap-4"
-        style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
-        <div className="flex items-center gap-2">
-          <Users size={18} className="text-accent-500 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              Nombre de persones
-            </p>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {persons >= 20 ? '🎉 Descompte 15% per grup!' : persons >= 10 ? '🎉 Descompte 10% per grup!' : 'Descompte a partir de 10 persones'}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <button
-            onClick={() => setPersons(p => Math.max(1, p - 1))}
-            className="w-9 h-9 rounded-xl flex items-center justify-center border transition-colors hover:bg-accent-500/10"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
-            <Minus size={14} />
-          </button>
-          <span className="text-lg font-black tabular-nums w-8 text-center" style={{ color: 'var(--text-primary)' }}>
-            {persons}
-          </span>
-          <button
-            onClick={() => setPersons(p => p + 1)}
-            className="w-9 h-9 rounded-xl flex items-center justify-center border transition-colors hover:bg-accent-500/10"
-            style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
-            <Plus size={14} />
-          </button>
-        </div>
-      </div>
+      {/* Llista de cursos amb quantitat individual */}
+      <div className="flex flex-col gap-3">
+        {courses.map((course, i) => {
+          const qty = getQty(course.id!);
+          const price = getCoursePrice(course);
+          const disc = getDiscount(qty);
+          const lineTotal = getLineTotal(course);
 
-      {/* Llista de cursos */}
-      <div className="flex flex-col gap-2">
-        {courses.map((course, i) => (
-          <div key={course.id}
-            className="flex items-center gap-3 rounded-2xl p-3 border transition-colors"
-            style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
-            <span className="w-5 h-5 rounded-full bg-accent-500/15 text-accent-500 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-              {i + 1}
-            </span>
-            <div
-              className={PNG_CATS.includes(course.category) ? 'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0' : `w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}
-              style={PNG_CATS.includes(course.category) ? { backgroundColor: pngBgColors[course.category] ?? '#f5f5f5' } : {}}>
-              <CourseIcon category={course.category} size={24} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Link to={`/cursos/${course.id}`}>
-                <p className="text-sm font-semibold truncate hover:text-accent-500 transition-colors"
-                  style={{ color: 'var(--text-primary)' }}>{course.name}</p>
-              </Link>
-              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                {course.duration}h · {t(`courses.level_${course.level}`)}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="text-right">
-                <span className="text-sm font-black tabular-nums block" style={{ color: 'var(--text-primary)' }}>
-                  {formatCurrency(getCoursePrice(course))}
+          return (
+            <div key={course.id}
+              className="rounded-2xl border p-3 flex flex-col gap-2.5"
+              style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
+              {/* Fila superior: logo + nom + eliminar */}
+              <div className="flex items-center gap-3">
+                <span className="w-5 h-5 rounded-full bg-accent-500/15 text-accent-500 text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                  {i + 1}
                 </span>
-                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>per persona</span>
+                <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}>
+                  <CourseIcon category={course.category} size={22} />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Link to={`/cursos/${course.id}`}>
+                    <p className="text-sm font-semibold truncate hover:text-accent-500 transition-colors"
+                      style={{ color: 'var(--text-primary)' }}>{course.name}</p>
+                  </Link>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    {course.duration}h · {formatCurrency(price)} / persona
+                  </p>
+                </div>
+                <button onClick={() => handleRemove(course)}
+                  className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/10 transition-colors flex-shrink-0">
+                  <Trash2 size={13} />
+                </button>
               </div>
-              <button onClick={() => handleRemove(course)}
-                className="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/10 transition-colors">
-                <Trash2 size={13} />
-              </button>
+
+              {/* Fila inferior: selector persones + total */}
+              <div className="flex items-center justify-between pl-8">
+                {/* Selector persones */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Persones:</span>
+                  <button onClick={() => setQty(course.id!, Math.max(1, qty - 1))}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center border transition-colors hover:bg-accent-500/10"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
+                    <Minus size={11} />
+                  </button>
+                  <span className="text-sm font-black w-6 text-center tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                    {qty}
+                  </span>
+                  <button onClick={() => setQty(course.id!, qty + 1)}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center border transition-colors hover:bg-accent-500/10"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}>
+                    <Plus size={11} />
+                  </button>
+                </div>
+
+                {/* Total línia */}
+                <div className="text-right">
+                  {disc > 0 && (
+                    <p className="text-[10px] text-green-400">🎉 -{(disc*100).toFixed(0)}% grup</p>
+                  )}
+                  <span className="text-sm font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
+                    {formatCurrency(lineTotal)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Nota descompte si aplica */}
+              {qty >= 10 && (
+                <div className="ml-8 px-2 py-1 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <p className="text-[10px] text-green-400">
+                    🎉 {qty >= 20 ? '15%' : '10%'} de descompte aplicat per grup de {qty} persones
+                  </p>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* RESUM TOTAL */}
@@ -216,40 +223,38 @@ export function BudgetPage() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-base)' }}>
           <Euro size={14} className="text-accent-500" />
           <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Resum</span>
+          {Object.keys(sheetPrices).length > 0 && (
+            <span className="text-[9px] text-green-400 ml-auto">● preus en temps real</span>
+          )}
         </div>
         <div className="px-4 py-3 flex flex-col gap-2" style={{ backgroundColor: 'var(--bg-card)' }}>
-          {courses.map((c) => (
-            <div key={c.id} className="flex items-center justify-between">
-              <span className="text-xs truncate flex-1 mr-2" style={{ color: 'var(--text-secondary)' }}>{c.name}</span>
-              <span className="text-xs font-medium tabular-nums flex-shrink-0" style={{ color: 'var(--text-primary)' }}>
-                {formatCurrency(getCoursePrice(c))} × {persons}p = {formatCurrency(getCoursePrice(c) * persons)}
-              </span>
-            </div>
-          ))}
-
-          {discount > 0 && (
-            <div className="flex items-center justify-between pt-1 border-t" style={{ borderColor: 'var(--border-base)' }}>
-              <span className="text-xs text-green-400">🎉 Descompte {(discount*100).toFixed(0)}% ({persons} persones)</span>
-              <span className="text-xs font-semibold text-green-400 tabular-nums">-{formatCurrency(descompte)}</span>
-            </div>
-          )}
+          {courses.map((c) => {
+            const qty = getQty(c.id!);
+            const price = getCoursePrice(c);
+            const disc = getDiscount(qty);
+            return (
+              <div key={c.id} className="flex items-center justify-between">
+                <span className="text-xs truncate flex-1 mr-2" style={{ color: 'var(--text-secondary)' }}>
+                  {c.name} × {qty}p{disc > 0 ? ` (-${(disc*100).toFixed(0)}%)` : ''}
+                </span>
+                <span className="text-xs font-medium tabular-nums flex-shrink-0" style={{ color: 'var(--text-primary)' }}>
+                  {formatCurrency(getLineTotal(c))}
+                </span>
+              </div>
+            );
+          })}
 
           <div className="flex items-center justify-between pt-1.5 border-t mt-1" style={{ borderColor: 'var(--border-base)' }}>
             <div className="flex items-center gap-1.5 text-xs" style={{ color: 'var(--text-muted)' }}>
-              <Clock size={11} /> Hores de formació
+              <Clock size={11} /> Total hores
             </div>
             <span className="text-xs font-semibold tabular-nums" style={{ color: 'var(--text-primary)' }}>
-              {totalHours}h × {persons}p = {totalHours * persons}h
+              {totalHours}h
             </span>
           </div>
 
           <div className="flex items-center justify-between pt-2 border-t" style={{ borderColor: 'var(--border-strong)' }}>
-            <div>
-              <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>TOTAL</span>
-              {Object.keys(sheetPrices).length > 0 && (
-                <span className="text-[9px] ml-2 text-green-400">● preus actualitzats</span>
-              )}
-            </div>
+            <span className="text-base font-bold" style={{ color: 'var(--text-primary)' }}>TOTAL</span>
             <span className="text-2xl font-black tabular-nums text-accent-500">{formatCurrency(subtotal)}</span>
           </div>
         </div>
@@ -268,7 +273,7 @@ export function BudgetPage() {
 
         {budgetSaved ? (
           <div className="flex items-center justify-center gap-2 h-10 rounded-2xl bg-green-500/10 border border-green-500/20 text-green-500 text-sm font-semibold">
-            <CheckCircle size={16} /> Pressupost guardat al teu compte
+            <CheckCircle size={16} /> Pressupost guardat
           </div>
         ) : (
           <button onClick={handleSave}

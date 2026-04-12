@@ -5,52 +5,75 @@ import React, {
 
 const CART_KEY = 'shformacions_cart';
 
+interface CartItem { id: number; qty: number; }
+
 interface CartContextValue {
+  cartItems: CartItem[];
   cartIds: number[];
   cartCount: number;
   inCart: (id: number) => boolean;
+  getQty: (id: number) => number;
   toggleCart: (id: number) => void;
   addToCart: (id: number) => void;
   removeFromCart: (id: number) => void;
+  setQty: (id: number, qty: number) => void;
   clearCart: () => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [cartIds, setCartIds] = useState<number[]>(() => {
-    try { return JSON.parse(localStorage.getItem(CART_KEY) || '[]'); }
-    catch { return []; }
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    try {
+      const raw = localStorage.getItem(CART_KEY);
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      // Compatibilitat: si és array de números (versió antiga)
+      if (Array.isArray(parsed) && parsed.length > 0 && typeof parsed[0] === 'number') {
+        return parsed.map((id: number) => ({ id, qty: 1 }));
+      }
+      return parsed as CartItem[];
+    } catch { return []; }
   });
 
-  // Persisteix al localStorage cada vegada que canvia
   useEffect(() => {
-    localStorage.setItem(CART_KEY, JSON.stringify(cartIds));
-  }, [cartIds]);
+    localStorage.setItem(CART_KEY, JSON.stringify(cartItems));
+  }, [cartItems]);
 
-  const inCart = useCallback((id: number) => cartIds.includes(id), [cartIds]);
+  const cartIds = cartItems.map(i => i.id);
+  const inCart = useCallback((id: number) => cartItems.some(i => i.id === id), [cartItems]);
+  const getQty = useCallback((id: number) => cartItems.find(i => i.id === id)?.qty ?? 0, [cartItems]);
 
   const addToCart = useCallback((id: number) => {
-    setCartIds((prev) => prev.includes(id) ? prev : [...prev, id]);
+    setCartItems(prev => prev.some(i => i.id === id) ? prev : [...prev, { id, qty: 1 }]);
   }, []);
 
   const removeFromCart = useCallback((id: number) => {
-    setCartIds((prev) => prev.filter((x) => x !== id));
+    setCartItems(prev => prev.filter(i => i.id !== id));
   }, []);
 
   const toggleCart = useCallback((id: number) => {
-    setCartIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    setCartItems(prev =>
+      prev.some(i => i.id === id) ? prev.filter(i => i.id !== id) : [...prev, { id, qty: 1 }]
     );
   }, []);
 
-  const clearCart = useCallback(() => setCartIds([]), []);
+  const setQty = useCallback((id: number, qty: number) => {
+    if (qty <= 0) {
+      setCartItems(prev => prev.filter(i => i.id !== id));
+    } else {
+      setCartItems(prev => prev.map(i => i.id === id ? { ...i, qty } : i));
+    }
+  }, []);
+
+  const clearCart = useCallback(() => setCartItems([]), []);
 
   return (
     <CartContext.Provider value={{
+      cartItems,
       cartIds,
-      cartCount: cartIds.length,
-      inCart, toggleCart, addToCart, removeFromCart, clearCart,
+      cartCount: cartItems.length,
+      inCart, getQty, toggleCart, addToCart, removeFromCart, setQty, clearCart,
     }}>
       {children}
     </CartContext.Provider>
@@ -59,6 +82,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
 export function useCart(): CartContextValue {
   const ctx = useContext(CartContext);
-  if (!ctx) throw new Error('useCart must be used within CartProvider');
+  if (!ctx) throw new Error('useCart must be inside CartProvider');
   return ctx;
 }

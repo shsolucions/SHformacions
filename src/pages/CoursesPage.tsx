@@ -176,9 +176,7 @@ function CategorySection({ category, courses, t, inCart, onCartToggle }: {
   return (
     <div>
       <div className="flex items-center gap-2.5 mb-3">
-        <div
-          className={PNG_CATEGORIES.includes(category) ? 'w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0' : `w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'}`}
-          style={PNG_CATEGORIES.includes(category) ? { backgroundColor: pngBgColors[category] ?? '#f5f5f5' } : {}}>
+        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'}`}>
           <CourseIcon category={category} size={20} />
         </div>
         <div>
@@ -215,9 +213,7 @@ function CourseCard({ course, t, inCart, onCartToggle }: {
       <Link to={`/cursos/${course.id}`} className="block p-3.5">
         <div className="flex items-start gap-3">
           {/* Logo */}
-          <div
-            className={PNG_CATEGORIES.includes(course.category) ? 'w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0' : `w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}
-            style={PNG_CATEGORIES.includes(course.category) ? { backgroundColor: pngBgColors[course.category] ?? '#f5f5f5' } : {}}>
+          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}>
             <CourseIcon category={course.category} size={26} />
           </div>
           <div className="min-w-0 flex-1">

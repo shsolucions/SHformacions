@@ -93,8 +93,8 @@ export function HomePage() {
             const grad = categoryGradients[key] ?? 'from-gray-700 to-gray-900';
             return (
               <Link key={key} to={`/cursos?cat=${key}`}
-                className={`${PNG_CATS.includes(key) ? '' : `bg-gradient-to-br ${grad}`} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
-                style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80, ...(PNG_CATS.includes(key) ? { backgroundColor: pngBgColors[key] ?? '#f0f0f0' } : {}) }}>
+                className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
+                style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
                 <CourseIcon category={key} size={26} />
                 <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
                   {t(`cat.${key}`)}
@@ -150,17 +150,17 @@ export function HomePage() {
         </div>
       </div>
 
+      <AppVersionBadge />
     </div>
   );
 }
 
 function AppVersionBadge() {
   return (
-    <div className="flex justify-end pt-1 pb-2 pr-1">
-      <span className="text-[9px] select-none" style={{ color: 'var(--text-faint)', opacity: 0.5 }}>
+    <div className="flex justify-end pt-2 pb-1 pr-1">
+      <span className="text-[9px] select-none" style={{ color: 'var(--text-faint)', opacity: 0.45 }}>
         sh2026.04.12.1052 · Saïd Hammouda · SH Formació
       </span>
-      <AppVersionBadge />
     </div>
   );
 }
