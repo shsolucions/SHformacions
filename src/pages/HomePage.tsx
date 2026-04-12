@@ -154,6 +154,17 @@ export function HomePage() {
   );
 }
 
+function AppVersionBadge() {
+  return (
+    <div className="flex justify-end pt-1 pb-2 pr-1">
+      <span className="text-[9px] select-none" style={{ color: 'var(--text-faint)', opacity: 0.5 }}>
+        sh2026.04.12.1052 · Saïd Hammouda · SH Formació
+      </span>
+      <AppVersionBadge />
+    </div>
+  );
+}
+
 function FeaturedCourseCard({ course, t }: { course: Course; t: (k: string) => string }) {
   const grad = categoryGradients[course.category] ?? 'from-gray-700 to-gray-900';
   return (
