@@ -144,8 +144,23 @@ async function speakText(text: string, onStart: () => void, onEnd: () => void) {
   const synth = window.speechSynthesis;
   if (!synth) return;
   synth.cancel();
-  const clean = text
-    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FEFF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu, '')
+  // Eliminem TOTS els emojis i símbols especials usant la categoria Unicode
+  const stripEmojis = (s: string) =>
+    [...s].filter(ch => {
+      const cp = ch.codePointAt(0) ?? 0;
+      // Bloquegem tots els rangs d'emojis, símbols i dingbats
+      return !(
+        (cp >= 0x1F000 && cp <= 0x1FFFF) || // Emojis principals (😀👋🎙️...)
+        (cp >= 0x2600  && cp <= 0x27BF)  || // Símbols miscel·lanis, dingbats
+        (cp >= 0xFE00  && cp <= 0xFE0F)  || // Variació de selectors
+        (cp >= 0x200B  && cp <= 0x200F)  || // Espais zero-width
+        (cp >= 0x2300  && cp <= 0x23FF)  || // Símbols tècnics
+        (cp >= 0x2B00  && cp <= 0x2BFF)  || // Símbols geomètrics
+        cp === 0xFE0F || cp === 0x20E3    // Selector emoji + combinator
+      );
+    }).join('');
+
+  const clean = stripEmojis(text)
     .replace(/[*#_`~]/g,'')
     .replace(/https?:\/\/\S+/g,'')
     .replace(/\s+/g,' ').trim();
@@ -254,14 +269,31 @@ export function ChatBot({ onClose }: ChatBotProps) {
 
   const getSR = () => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-  const startRecording = useCallback(() => {
+  const startRecording = useCallback(async () => {
     const SR = getSR();
-    if (!SR) { alert('El teu navegador no suporta reconeixement de veu. Prova Chrome o Safari 14.5+'); return; }
+    if (!SR) {
+      alert('El reconeixement de veu no està disponible en aquest navegador.\nProva Safari (iOS 14.5+) o Chrome.');
+      return;
+    }
+    // iOS: demanem permís explícitament primer via getUserMedia
+    // Això força el diàleg de permisos ABANS d'iniciar la gravació
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(t => t.stop()); // Només necessitem el permís, no el stream
+    } catch {
+      alert('Permís de micròfon denegat.\n\niOS: Ves a Configuració > Safari > Micròfon i activa\'l.\nOpera: Ves a Configuració > Privadesa > Micròfon i activa\'l per a aquest lloc.');
+      return;
+    }
+
     if (recRef.current) { try { recRef.current.abort(); } catch { /**/ } }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rec: any = new SR();
     recRef.current = rec;
-    rec.lang = 'ca-ES'; rec.continuous = false; rec.interimResults = false; rec.maxAlternatives = 1;
+    // iOS funciona millor amb lang genèric; el model ja detecta l'idioma
+    rec.lang = 'ca-ES';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
       const t: string = e.results?.[0]?.[0]?.transcript ?? '';
@@ -270,15 +302,21 @@ export function ChatBot({ onClose }: ChatBotProps) {
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onerror = (e: any) => {
-      if (e.error === 'not-allowed') alert('Micròfon no autoritzat. Activa els permisos al navegador.');
+      // 'no-speech' és normal si l'usuari no ha parlat — no mostrem error
+      if (e.error !== 'no-speech' && e.error !== 'aborted') {
+        console.warn('SpeechRecognition error:', e.error);
+      }
       stopRecording();
     };
-    rec.onend = stopRecording;
+    rec.onend = () => { stopRecording(); };
     try {
       rec.start();
       setIsRecording(true); setRecordSecs(0);
       timerRef.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
-    } catch { setIsRecording(false); }
+    } catch (err) {
+      console.warn('No s\'ha pogut iniciar el micro:', err);
+      setIsRecording(false);
+    }
   }, [sendMsg]);
 
   const stopRecording = useCallback(() => {
@@ -402,11 +440,9 @@ export function ChatBot({ onClose }: ChatBotProps) {
             <div className="flex items-center gap-1.5 px-3 py-2.5">
               {hasSR && (
                 <button
-                  onMouseDown={startRecording}
-                  onTouchStart={e => { e.preventDefault(); startRecording(); }}
-                  onClick={isRecording ? stopRecording : undefined}
+                  onClick={isRecording ? stopRecording : startRecording}
                   disabled={loading}
-                  title={isRecording ? 'Atura' : 'Nota de veu'}
+                  title={isRecording ? 'Atura la gravació' : 'Nota de veu'}
                   className={['w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0',
                     isRecording ? 'bg-red-500 shadow-lg scale-110' : 'border hover:bg-accent-500/10'].join(' ')}
                   style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
