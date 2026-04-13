@@ -144,7 +144,11 @@ async function speakText(text: string, onStart: () => void, onEnd: () => void) {
   const synth = window.speechSynthesis;
   if (!synth) return;
   synth.cancel();
-  const clean = text.replace(/[*#_`~]/g,'').replace(/https?:\/\/\S+/g,'').replace(/\s+/g,' ').trim();
+  const clean = text
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{FE00}-\u{FEFF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FAFF}]/gu, '')
+    .replace(/[*#_`~]/g,'')
+    .replace(/https?:\/\/\S+/g,'')
+    .replace(/\s+/g,' ').trim();
   if (!clean) return;
   const lang = detectLang(clean);
   const voices = await getVoices();
