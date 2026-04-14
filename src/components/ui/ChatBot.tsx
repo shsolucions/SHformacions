@@ -320,7 +320,12 @@ export function ChatBot({ onClose }: ChatBotProps) {
   }, [sendMsg]);
 
   const stopRecording = useCallback(() => {
-    if (recRef.current) { try { recRef.current.stop(); } catch { /**/ } recRef.current = null; }
+    if (recRef.current) {
+      try { recRef.current.stop(); } catch { /**/ }
+      // iOS a vegades no dispara onresult si s'atura molt ràpid — forcem l'aturada
+      try { recRef.current.abort(); } catch { /**/ }
+      recRef.current = null;
+    }
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
     setIsRecording(false); setRecordSecs(0);
   }, []);
@@ -440,10 +445,16 @@ export function ChatBot({ onClose }: ChatBotProps) {
             <div className="flex items-center gap-1.5 px-3 py-2.5">
               {hasSR && (
                 <button
-                  onClick={isRecording ? stopRecording : startRecording}
+                  // Mòbil: prem i aguanta per gravar, deixa anar per enviar
+                  onTouchStart={e => { e.preventDefault(); if (!isRecording) startRecording(); }}
+                  onTouchEnd={e => { e.preventDefault(); if (isRecording) stopRecording(); }}
+                  onTouchCancel={e => { e.preventDefault(); if (isRecording) stopRecording(); }}
+                  // Escriptori: clic per iniciar/aturar
+                  onMouseDown={e => { if (!('ontouchstart' in window) && !isRecording) startRecording(); }}
+                  onMouseUp={e => { if (!('ontouchstart' in window) && isRecording) stopRecording(); }}
                   disabled={loading}
-                  title={isRecording ? 'Atura la gravació' : 'Nota de veu'}
-                  className={['w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0',
+                  title={isRecording ? 'Deixa anar per enviar' : 'Prem i aguanta per parlar'}
+                  className={['w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 select-none',
                     isRecording ? 'bg-red-500 shadow-lg scale-110' : 'border hover:bg-accent-500/10'].join(' ')}
                   style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
                   {isRecording ? <VoiceWave color="white" size={18} /> : <Mic size={16} />}
@@ -464,7 +475,7 @@ export function ChatBot({ onClose }: ChatBotProps) {
 
             {hasSR && !isRecording && (
               <p className="text-center pb-1.5" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
-                🎙️ Toca el micro per nota de veu · {autoVoice ? '🔊 Resposta en veu ON' : '🔇 Toca 🔊 a dalt per activar veu'}
+                🎙️ Prem i aguanta el micro per parlar · {autoVoice ? '🔊 Resposta en veu ON' : '🔇 Toca 🔊 a dalt per activar veu'}
               </p>
             )}
           </div>
