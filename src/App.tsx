@@ -24,6 +24,10 @@ import { ProfilePage }       from './pages/ProfilePage';
 import { LoginPage }    from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 
+// Diploma pages (Entrega 3.4)
+import { DiplomasPage }       from './pages/DiplomasPage';
+import { VerifyDiplomaPage }  from './pages/VerifyDiplomaPage';
+
 // ── Guards ───────────────────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -95,6 +99,10 @@ export default function App() {
         <Route path="/settings" element={<Navigate to="/configuracio" replace />} />
         <Route path="/profile"  element={<Navigate to="/perfil" replace />} />
         <Route path="/notifications" element={<Navigate to="/notificacions" replace />} />
+
+        {/* Diplomes (Entrega 3.4) */}
+        <Route path="/diplomes"  element={<RequireAuth><AppLayout><DiplomasPage /></AppLayout></RequireAuth>} />
+        <Route path="/verificar" element={<AppLayout><VerifyDiplomaPage /></AppLayout>} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

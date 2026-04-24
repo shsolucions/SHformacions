@@ -6,15 +6,34 @@ import React, {
   useCallback,
   type ReactNode,
 } from 'react';
-import { setLanguage, t as translate, availableLanguages } from '../i18n';
+import {
+  setLanguage,
+  t as translate,
+  availableLanguages,
+  getDirection,
+  isRTL,
+} from '../i18n';
 import { backupService } from '../services/backupService';
 import type { Language } from '../types';
+
+/** Conjunt de codis vàlids — ha de coincidir amb el tipus Language */
+const VALID_LANGS: readonly Language[] = [
+  'ca', 'es', 'en', 'fr', 'de', 'it', 'pt', 'nl', 'ro', 'ar',
+] as const;
+
+function isValidLang(v: unknown): v is Language {
+  return typeof v === 'string' && (VALID_LANGS as readonly string[]).includes(v);
+}
 
 interface LanguageContextValue {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string, replacements?: Record<string, string>) => string;
   availableLanguages: typeof availableLanguages;
+  /** Direcció del text (ltr o rtl) per l'idioma actual */
+  direction: 'ltr' | 'rtl';
+  /** L'idioma actual és RTL? (utilitat per components) */
+  isRTL: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextValue | null>(null);
@@ -22,14 +41,27 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLang] = useState<Language>(() => {
     const saved = localStorage.getItem('shformacions_lang');
-    if (saved === 'ca' || saved === 'es' || saved === 'en') return saved;
-    return 'ca'; // Català per defecte sempre
+    if (isValidLang(saved)) return saved;
+    return 'ca'; // Català per defecte
   });
 
   useEffect(() => {
     setLanguage(language);
     localStorage.setItem('shformacions_lang', language);
+
+    // Apliquem dir i lang al <html> per donar suport a RTL i a selectors CSS
     document.documentElement.lang = language;
+    document.documentElement.dir = getDirection(language);
+
+    // Classe auxiliar per estilar amb Tailwind (:dir() encara no està universal)
+    if (isRTL(language)) {
+      document.documentElement.classList.add('rtl');
+      document.documentElement.classList.remove('ltr');
+    } else {
+      document.documentElement.classList.add('ltr');
+      document.documentElement.classList.remove('rtl');
+    }
+
     // persist to DB settings (non-blocking)
     backupService.setSetting('app_language', language).catch(() => {});
   }, [language]);
@@ -37,6 +69,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   // Init i18n on mount
   useEffect(() => {
     setLanguage(language);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSetLanguage = useCallback((lang: Language) => {
@@ -59,6 +92,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
         setLanguage: handleSetLanguage,
         t: tFn,
         availableLanguages,
+        direction: getDirection(language),
+        isRTL: isRTL(language),
       }}
     >
       {children}

@@ -1,97 +1,70 @@
-import React, { useRef, type KeyboardEvent } from 'react';
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface PinInputProps {
   value: string;
   onChange: (value: string) => void;
+  /** Mantingut per compatibilitat retroactiva (no s'utilitza). */
   length?: number;
   error?: boolean;
   label?: string;
   disabled?: boolean;
+  placeholder?: string;
+  autoFocus?: boolean;
 }
 
+/**
+ * Camp de contrasenya alfanumèrica (mínim 8 caràcters recomanat).
+ * Substitueix l'antic PinInput de 6 caselles per un input únic amb show/hide.
+ */
 export function PinInput({
   value,
   onChange,
-  length = 4,
   error = false,
   label,
   disabled = false,
+  placeholder = '••••••••',
+  autoFocus = false,
 }: PinInputProps) {
-  const refs = useRef<(HTMLInputElement | null)[]>([]);
-
-  const digits = value.padEnd(length, '').split('').slice(0, length);
-
-  const handleChange = (index: number, char: string) => {
-    if (!/^\d?$/.test(char)) return;
-    const newDigits = [...digits];
-    newDigits[index] = char;
-    const newValue = newDigits.join('').replace(/\s/g, '');
-    onChange(newValue.slice(0, length));
-    if (char && index < length - 1) {
-      refs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleKeyDown = (index: number, e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      if (digits[index]) {
-        const newDigits = [...digits];
-        newDigits[index] = '';
-        onChange(newDigits.join('').replace(/\s/g, ''));
-      } else if (index > 0) {
-        refs.current[index - 1]?.focus();
-        const newDigits = [...digits];
-        newDigits[index - 1] = '';
-        onChange(newDigits.join('').replace(/\s/g, ''));
-      }
-    } else if (e.key === 'ArrowLeft' && index > 0) {
-      refs.current[index - 1]?.focus();
-    } else if (e.key === 'ArrowRight' && index < length - 1) {
-      refs.current[index + 1]?.focus();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent) => {
-    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, length);
-    if (pasted) {
-      onChange(pasted);
-      refs.current[Math.min(pasted.length, length - 1)]?.focus();
-    }
-    e.preventDefault();
-  };
+  const [show, setShow] = useState(false);
 
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
         <label className="text-sm font-medium text-gray-300">{label}</label>
       )}
-      <div className="flex gap-3 justify-center">
-        {Array.from({ length }).map((_, i) => (
-          <input
-            key={i}
-            ref={(el) => { refs.current[i] = el; }}
-            type="password"
-            inputMode="numeric"
-            maxLength={1}
-            value={digits[i] || ''}
-            disabled={disabled}
-            onPaste={handlePaste}
-            onChange={(e) => handleChange(i, e.target.value)}
-            onKeyDown={(e) => handleKeyDown(i, e)}
-            onFocus={(e) => e.target.select()}
-            className={[
-              'w-14 h-14 text-center text-2xl font-bold rounded-2xl border bg-[#111] text-white',
-              'transition-all duration-150 outline-none caret-transparent',
-              'focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30 focus:scale-105',
-              error
-                ? 'border-red-500/60'
-                : digits[i]
-                ? 'border-accent-500/50 bg-accent-500/5'
-                : 'border-[#2a2a2a]',
-              disabled ? 'opacity-50 cursor-not-allowed' : '',
-            ].filter(Boolean).join(' ')}
-          />
-        ))}
+      <div className="relative">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          disabled={disabled}
+          autoFocus={autoFocus}
+          placeholder={placeholder}
+          autoComplete="current-password"
+          onChange={(e) => onChange(e.target.value)}
+          maxLength={64}
+          className={[
+            'w-full h-12 px-4 pr-12 text-base rounded-xl border bg-[#111] text-white',
+            'transition-all duration-150 outline-none',
+            'focus:border-accent-500 focus:ring-2 focus:ring-accent-500/30',
+            error
+              ? 'border-red-500/60'
+              : value
+              ? 'border-accent-500/50 bg-accent-500/5'
+              : 'border-[#2a2a2a]',
+            disabled ? 'opacity-50 cursor-not-allowed' : '',
+          ].filter(Boolean).join(' ')}
+        />
+        <button
+          type="button"
+          tabIndex={-1}
+          onClick={() => setShow((s) => !s)}
+          disabled={disabled}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 p-1"
+          aria-label={show ? 'Amagar contrasenya' : 'Mostrar contrasenya'}
+        >
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
       </div>
     </div>
   );

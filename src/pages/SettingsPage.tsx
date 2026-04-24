@@ -6,10 +6,12 @@ import {
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
+import { useAuth } from '../context/AuthContext';
 import { backupService } from '../services/backupService';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
+import { SyncAdminPanel } from '../components/admin/SyncAdminPanel';
 import { availableLanguages } from '../i18n';
 import type { BackupData } from '../types';
 
@@ -17,6 +19,7 @@ export function SettingsPage() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
+  const { isAdmin } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -254,6 +257,9 @@ export function SettingsPage() {
         variant="warning"
         confirmLabel={t('settings.import')}
       />
+
+      {/* Panell sincronització Dexie ↔ Supabase (només admin) */}
+      {isAdmin && <SyncAdminPanel />}
     </div>
   );
 }

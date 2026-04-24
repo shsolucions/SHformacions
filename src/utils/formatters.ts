@@ -11,7 +11,7 @@ export function capitalize(text: string): string {
 export function getInitials(name: string): string {
   return name.split(' ').slice(0, 2).map((p) => p.charAt(0).toUpperCase()).join('');
 }
-export function isValidPin(pin: string): boolean { return /^\d{4}$/.test(pin); }
+export function isValidPin(pin: string): boolean { return typeof pin === 'string' && pin.length >= 6 && pin.length <= 64; }
 export function isValidEmail(email: string): boolean { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email); }
 
 // Brand colors per category (for backgrounds, badges, logos)

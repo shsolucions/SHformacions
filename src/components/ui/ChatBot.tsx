@@ -1,17 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Loader2, Phone, Mail, Save, ChevronDown, Mic, Volume2, VolumeX, StopCircle } from 'lucide-react';
+import { X, Send, Loader2, Phone, Mail, Save, ChevronDown, Mic, MicOff, Volume2 } from 'lucide-react';
 import { sendMessage, saveConversationToSheet, type ChatMessage } from '../../services/geminiService';
 
 interface ChatBotProps { onClose: () => void; }
-
-declare global {
-  interface Window {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    SpeechRecognition: any;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    webkitSpeechRecognition: any;
-  }
-}
 
 function RobotAvatar({ size = 28 }: { size?: number }) {
   return (
@@ -32,73 +23,49 @@ function TypingDots() {
   );
 }
 
-function VoiceWave({ color = '#0ea5e9', size = 16 }: { color?: string; size?: number }) {
-  return (
-    <div className="flex items-center gap-[3px]">
-      {[0.4, 0.7, 1, 0.7, 0.4].map((h, i) => (
-        <span key={i} style={{
-          display: 'inline-block',
-          width: size * 0.18,
-          height: size * h,
-          backgroundColor: color,
-          borderRadius: 99,
-          animation: 'voiceWave 0.8s ease-in-out infinite',
-          animationDelay: `${i * 0.12}s`,
-        }} />
-      ))}
-      <style>{`@keyframes voiceWave { 0%,100%{transform:scaleY(0.4);opacity:0.6} 50%{transform:scaleY(1);opacity:1} }`}</style>
-    </div>
-  );
-}
-
-interface MessageProps { msg: ChatMessage; isVoice?: boolean; onPlay?: () => void; isPlaying?: boolean; }
-function Message({ msg, isVoice, onPlay, isPlaying }: MessageProps) {
+function Message({ msg }: { msg: ChatMessage }) {
   const isBot = msg.role === 'model';
   const lines = msg.text.split('\n');
   return (
     <div className={`flex gap-2 ${isBot ? 'items-start' : 'items-end justify-end'}`}>
       {isBot && <RobotAvatar size={28} />}
-      <div className={['max-w-[82%] px-3 py-2.5 rounded-2xl text-sm leading-relaxed',
-        isBot ? 'rounded-tl-sm' : 'rounded-br-sm text-white'].join(' ')}
+      <div
+        className={['max-w-[82%] px-3 py-2.5 rounded-2xl text-sm leading-relaxed',
+          isBot ? 'rounded-tl-sm' : 'rounded-br-sm text-white'].join(' ')}
         style={isBot
           ? { backgroundColor: 'var(--bg-elevated)', color: 'var(--text-primary)' }
           : { backgroundColor: '#0ea5e9' }}>
-        {isVoice && !isBot && (
-          <div className="flex items-center gap-1.5 mb-1 opacity-80">
-            <Mic size={11} /><span style={{ fontSize: 10 }}>Nota de veu</span>
-          </div>
-        )}
-        {lines.map((line, i) => line === '' ? <div key={i} className="h-1.5" /> : <p key={i}>{line}</p>)}
-        {isBot && onPlay && (
-          <button onClick={onPlay}
-            className="mt-2 flex items-center gap-1.5 opacity-60 hover:opacity-100 transition-opacity"
-            style={{ fontSize: 10 }}>
-            {isPlaying
-              ? <><VoiceWave color="currentColor" size={13} /><span>Parlant...</span></>
-              : <><Volume2 size={12} /><span>Escoltar resposta</span></>}
-          </button>
-        )}
+        {lines.map((line, i) => (
+          line === '' ? <div key={i} className="h-1.5" /> : <p key={i}>{line}</p>
+        ))}
       </div>
     </div>
   );
 }
 
-function ContactForm({ onSave, onSkip }: { onSave: (p: string, e: string) => void; onSkip: () => void }) {
-  const [phone, setPhone] = useState(''); const [email, setEmail] = useState('');
+function ContactForm({ onSave, onSkip }: {
+  onSave: (phone: string, email: string) => void; onSkip: () => void;
+}) {
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   return (
-    <div className="rounded-2xl border p-4 mx-1 my-2"
+    <div className="rounded-2xl border p-4 mx-1 my-2 animate-slide-up"
       style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
-      <p className="text-xs font-semibold text-accent-500 mb-3">💾 Deixa les teves dades i en Saïd es posarà en contacte</p>
+      <p className="text-xs font-semibold text-accent-500 mb-3">
+        💾 Deixa les teves dades i en Saïd es posarà en contacte
+      </p>
       <div className="flex flex-col gap-2.5">
         <div className="relative">
           <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="tel" placeholder="Telèfon (WhatsApp)" value={phone} onChange={e => setPhone(e.target.value)}
+          <input type="tel" placeholder="Telèfon (WhatsApp)" value={phone}
+            onChange={(e) => setPhone(e.target.value)}
             className="w-full h-9 pl-8 pr-3 rounded-xl border outline-none focus:border-accent-500"
             style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }} />
         </div>
         <div className="relative">
           <Mail size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input type="email" placeholder="Correu electrònic" value={email} onChange={e => setEmail(e.target.value)}
+          <input type="email" placeholder="Correu electrònic" value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full h-9 pl-8 pr-3 rounded-xl border outline-none focus:border-accent-500"
             style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }} />
         </div>
@@ -108,249 +75,276 @@ function ContactForm({ onSave, onSkip }: { onSave: (p: string, e: string) => voi
             <Save size={13} /> Enviar dades
           </button>
           <button onClick={onSkip} className="px-3 h-9 rounded-xl border text-xs transition-colors"
-            style={{ borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}>Ara no</button>
+            style={{ borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}>
+            Ara no
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
-// ── TTS ──────────────────────────────────────────────────────────────────────
-const VOICE_PREFS: Record<string, string[]> = {
-  ca: ['ca-ES','ca_ES','ca','es-ES','es'],
-  es: ['es-ES','es_ES','es','ca-ES'],
-  en: ['en-GB','en-US','en'],
-  fr: ['fr-FR','fr_FR','fr'],
-};
-
-function detectLang(text: string): string {
-  const t = text.toLowerCase();
-  if (/\b(bonjour|merci|oui|non|vous|je|est)\b/.test(t)) return 'fr';
-  if (/\b(hello|thank|please|yes|no|want|need)\b/.test(t)) return 'en';
-  if (/\b(hola|gracias|sí|quiero|puedo|tiene|precio|buenos|necesito)\b/.test(t)) return 'es';
-  return 'ca';
-}
-
-async function getVoices(): Promise<SpeechSynthesisVoice[]> {
-  return new Promise(resolve => {
-    const v = window.speechSynthesis?.getVoices() ?? [];
-    if (v.length > 0) { resolve(v); return; }
-    window.speechSynthesis?.addEventListener('voiceschanged', () => resolve(window.speechSynthesis.getVoices()), { once: true });
-    setTimeout(() => resolve(window.speechSynthesis?.getVoices() ?? []), 1200);
-  });
-}
-
-async function speakText(text: string, onStart: () => void, onEnd: () => void) {
-  const synth = window.speechSynthesis;
-  if (!synth) return;
-  synth.cancel();
-  // Eliminem TOTS els emojis i símbols especials usant la categoria Unicode
-  const stripEmojis = (s: string) =>
-    [...s].filter(ch => {
-      const cp = ch.codePointAt(0) ?? 0;
-      // Bloquegem tots els rangs d'emojis, símbols i dingbats
-      return !(
-        (cp >= 0x1F000 && cp <= 0x1FFFF) || // Emojis principals (😀👋🎙️...)
-        (cp >= 0x2600  && cp <= 0x27BF)  || // Símbols miscel·lanis, dingbats
-        (cp >= 0xFE00  && cp <= 0xFE0F)  || // Variació de selectors
-        (cp >= 0x200B  && cp <= 0x200F)  || // Espais zero-width
-        (cp >= 0x2300  && cp <= 0x23FF)  || // Símbols tècnics
-        (cp >= 0x2B00  && cp <= 0x2BFF)  || // Símbols geomètrics
-        cp === 0xFE0F || cp === 0x20E3    // Selector emoji + combinator
-      );
-    }).join('');
-
-  const clean = stripEmojis(text)
-    .replace(/[*#_`~]/g,'')
-    .replace(/https?:\/\/\S+/g,'')
-    .replace(/\s+/g,' ').trim();
-  if (!clean) return;
-  const lang = detectLang(clean);
-  const voices = await getVoices();
-  let chosen: SpeechSynthesisVoice | null = null;
-  for (const pref of (VOICE_PREFS[lang] ?? ['ca-ES'])) {
-    chosen = voices.find(v => v.lang === pref || v.lang.startsWith(pref.split('-')[0])) ?? null;
-    if (chosen) break;
+// ── Tipus SpeechRecognition (API del navegador) ──────────────────────────────
+declare global {
+  interface Window {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    SpeechRecognition: any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    webkitSpeechRecognition: any;
   }
-  const utter = new SpeechSynthesisUtterance(clean);
-  if (chosen) utter.voice = chosen;
-  utter.lang = chosen?.lang ?? 'ca-ES';
-  utter.rate = 0.93; utter.pitch = 1.0; utter.volume = 1.0;
-  utter.onstart = onStart; utter.onend = onEnd; utter.onerror = onEnd;
-  setTimeout(() => synth.speak(utter), 50);
 }
 
-// ── Component principal ──────────────────────────────────────────────────────
 export function ChatBot({ onClose }: ChatBotProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [voiceIdxs, setVoiceIdxs] = useState<Set<number>>(new Set());
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [contactSaved, setContactSaved] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState<string>('');
+  const [awaitingName, setAwaitingName] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [recordSecs, setRecordSecs] = useState(0);
-  const [playingIdx, setPlayingIdx] = useState<number | null>(null);
-  const [autoVoice, setAutoVoice] = useState(false);
-
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recRef = useRef<any>(null);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasGreeted = useRef(false);
-  const messagesRef = useRef(messages);
-  messagesRef.current = messages;
 
+  // Salutació inicial — enviem una instrucció clara per disparar la salutació
   useEffect(() => {
     if (hasGreeted.current) return;
     hasGreeted.current = true;
-    setTimeout(() => setMessages([{ role: 'model', text: "Hola! 👋 Soc el company virtual d'en Saïd 😊" }]), 600);
+    setLoading(true);
+    // Salutació inicial simple — no cal cridar Gemini, és sempre igual
+    setTimeout(() => {
+      setMessages([{ role: 'model', text: "Hola! 👋 Soc el company virtual d'en Saïd 😊" }]);
+      setLoading(false);
+    }, 600);
   }, []);
 
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, loading, showContactForm]);
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); },
+    [messages, loading, showContactForm]);
 
+  // Detectar si cal mostrar el formulari de contacte
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'model' || contactSaved || messages.length < 3) return;
-    const triggers = ['dates','disponibilitat','telèfon','correu','contacte','posar-me en contacte','pressupost','dades'];
-    if (triggers.some(t => last.text.toLowerCase().includes(t))) setTimeout(() => setShowContactForm(true), 800);
+    const text = last.text.toLowerCase();
+    // Mostrem el formulari quan el bot menciona dates, contacte, telèfon o correu
+    const triggers = [
+      'dates', 'disponibilitat', 'telèfon', 'correu', 'contacte',
+      'posar-me en contacte', 'enviarte', 'enviar-te', 'pressupost',
+      'dades', 'informació addicional'
+    ];
+    if (triggers.some(t => text.includes(t))) {
+      setTimeout(() => setShowContactForm(true), 800);
+    }
   }, [messages, contactSaved]);
 
-  const playMessage = useCallback(async (idx: number, text: string) => {
-    if (playingIdx === idx) { window.speechSynthesis?.cancel(); setPlayingIdx(null); return; }
-    window.speechSynthesis?.cancel();
-    setPlayingIdx(idx);
-    await speakText(text, () => setPlayingIdx(idx), () => setPlayingIdx(null));
-  }, [playingIdx]);
+  // ── Detectar idioma actual de l'app per TTS ─────────────────────────────────
+  // Prioritats de veu per idioma (codi IETF)
+  const VOICE_PREFS: Record<string, string[]> = {
+    ca: ['ca-ES', 'ca_ES', 'ca', 'es-ES', 'es'],
+    es: ['es-ES', 'es_ES', 'es', 'ca-ES'],
+    en: ['en-GB', 'en-US', 'en'],
+    fr: ['fr-FR', 'fr_FR', 'fr'],
+  };
 
-  const sendMsg = useCallback(async (text: string, isVoice = false) => {
-    const trimmed = text.trim();
-    if (!trimmed || loading) return;
+  // Obtenim la llista de veus (Safari les carrega async)
+  const getVoices = (): Promise<SpeechSynthesisVoice[]> =>
+    new Promise(resolve => {
+      const v = window.speechSynthesis?.getVoices() ?? [];
+      if (v.length > 0) { resolve(v); return; }
+      // Safari carrega les veus de manera asíncrona
+      const handler = () => { resolve(window.speechSynthesis.getVoices()); };
+      window.speechSynthesis?.addEventListener('voiceschanged', handler, { once: true });
+      // Timeout de seguretat per si no dispara l'event
+      setTimeout(() => resolve(window.speechSynthesis?.getVoices() ?? []), 1000);
+    });
+
+  // Detecta l'idioma del text per triar la veu correcta
+  const detectLang = (text: string): string => {
+    const t = text.toLowerCase();
+    if (/\b(bonjour|merci|oui|non|vous|je|est|les|des)\b/.test(t)) return 'fr';
+    if (/\b(hello|thank|please|yes|no|course|want|need)\b/.test(t)) return 'en';
+    if (/\b(hola|gracias|sí|no|quiero|puedo|tiene|precio)\b/.test(t)) return 'es';
+    return 'ca'; // Català per defecte
+  };
+
+  const speak = async (text: string) => {
+    if (!voiceEnabled) return;
+    const synth = window.speechSynthesis;
+    if (!synth) return;
+    synth.cancel();
+
+    // Netegem el text: eliminem Markdown i caràcters no parlables
+    const clean = text
+      .replace(/[*#_`~]/g, '')
+      .replace(/https?:\/\/\S+/g, '')   // eliminem URLs
+      .replace(/\s+/g, ' ')
+      .trim();
+    if (!clean) return;
+
+    const lang = detectLang(clean);
+    const prefs = VOICE_PREFS[lang] ?? ['ca-ES'];
+    const voices = await getVoices();
+
+    // Triem la millor veu disponible
+    let chosen: SpeechSynthesisVoice | null = null;
+    for (const pref of prefs) {
+      chosen = voices.find(v =>
+        v.lang === pref || v.lang.startsWith(pref.split('-')[0])
+      ) ?? null;
+      if (chosen) break;
+    }
+
+    const utter = new SpeechSynthesisUtterance(clean);
+    if (chosen) utter.voice = chosen;
+    utter.lang = chosen?.lang ?? prefs[0];
+    utter.rate = lang === 'ca' ? 0.92 : 0.95; // Català una mica més lent per claredat
+    utter.pitch = 1.0;
+    utter.volume = 1.0;
+    utter.onstart = () => setIsSpeaking(true);
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+
+    // Safari iOS: cal petita pausa per evitar que es talli la veu
+    setTimeout(() => synth.speak(utter), 50);
+  };
+
+  // ── Micròfon: reconeixement de veu (compatible Safari/Chrome) ─────────────
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const getSR = (): any => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+  const RECOG_LANGS: Record<string, string> = {
+    ca: 'ca-ES', es: 'es-ES', en: 'en-GB', fr: 'fr-FR',
+  };
+  const [recogLang, setRecogLang] = useState<string>('ca');
+
+  const startRecording = () => {
+    const SR = getSR();
+    if (!SR) {
+      // Safari iOS no suporta WebSpeech - missatge amigable
+      alert('Per usar el micròfon necessites Safari iOS 14.5+ o Chrome. Comprova els permisos del micròfon a Configuració.');
+      return;
+    }
+    // Aturem qualsevol reconeixement anterior
+    if (recognitionRef.current) {
+      try { recognitionRef.current.abort(); } catch { /* ignorem */ }
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const rec: any = new SR();
+    recognitionRef.current = rec;
+    rec.lang = RECOG_LANGS[recogLang] ?? 'ca-ES';
+    rec.continuous = false;
+    rec.interimResults = false;
+    rec.maxAlternatives = 1;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    rec.onresult = (e: any) => {
+      const transcript: string = e.results?.[0]?.[0]?.transcript ?? '';
+      if (transcript.trim()) setInput(prev => prev ? prev + ' ' + transcript : transcript);
+      setIsRecording(false);
+    };
+    rec.onerror = (e: any) => {
+      console.warn('SpeechRecognition error:', e.error);
+      if (e.error === 'not-allowed') {
+        alert('Micròfon no autoritzat. Ves a Configuració > Safari > Micròfon i activa el permís.');
+      }
+      setIsRecording(false);
+    };
+    rec.onend = () => setIsRecording(false);
+
+    try {
+      rec.start();
+      setIsRecording(true);
+    } catch (err) {
+      console.warn('No s\'ha pogut iniciar el micròfon:', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      try { recognitionRef.current.stop(); } catch { /* ignorem */ }
+    }
+    setIsRecording(false);
+  };
+
+  const hasSpeechSupport = !!getSR();
+
+  const handleSend = useCallback(async () => {
+    const text = input.trim();
+    if (!text || loading) return;
     setInput('');
     setShowContactForm(false);
-    const currentMsgs = messagesRef.current;
-    const msgIdx = currentMsgs.length;
-    setMessages(prev => [...prev, { role: 'user', text: trimmed }]);
-    if (isVoice) setVoiceIdxs(prev => new Set(prev).add(msgIdx));
+    const userMsg: ChatMessage = { role: 'user', text };
+    setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
-      const history = [...currentMsgs].filter(m => m.role === 'user' || m.role === 'model');
-      while (history.length > 0 && history[0].role === 'model') history.shift();
-      const isFirst = history.length === 0;
-      const getLang = (t: string) => {
-        const l = t.toLowerCase();
-        if (/\b(bonjour|merci|oui|vous)\b/.test(l)) return 'francès';
-        if (/\b(hello|thank|please|yes)\b/.test(l)) return 'anglès';
-        if (/\b(hola|gracias|sí|quiero|puedo|precio|buenos|necesito)\b/.test(l)) return 'castellà';
-        return 'català';
-      };
-      const textToSend = isFirst
-        ? `[CONTEXT: Ja has saludat. L'usuari ha escrit el seu primer missatge EN ${getLang(trimmed).toUpperCase()}. OBLIGATORI: respon SEMPRE en ${getLang(trimmed)}. Demana el nom. No presentes opcions.]\n\nMissatge: ${trimmed}`
-        : trimmed;
-      const reply = await sendMessage(history, textToSend);
-      const botIdx = msgIdx + 1;
-      setMessages(prev => [...prev, { role: 'model', text: reply }]);
-      if (isVoice || autoVoice) {
-        setTimeout(async () => {
-          setPlayingIdx(botIdx);
-          await speakText(reply, () => setPlayingIdx(botIdx), () => setPlayingIdx(null));
-        }, 400);
+      // Construïm l'historial per Gemini
+      // Si és el PRIMER missatge de l'usuari, afegim context que Gemini ja ha saludat
+      const geminiHistory = [...messages].filter(m => m.role === 'user' || m.role === 'model');
+      // Traiem els missatges 'model' del principi (generats localment)
+      while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
+        geminiHistory.shift();
       }
-    } catch {
-      setMessages(prev => [...prev, { role: 'model', text: 'Ho sento, ha hagut un problema tècnic. Torna-ho a provar 🙏' }]);
+      // Si és el primer missatge (historial buit), diem a Gemini que ja ha saludat
+      // i que OBLIGATÒRIAMENT ha de demanar el nom abans de res
+      const isFirstMessage = geminiHistory.length === 0;
+      const textToSend = isFirstMessage
+        ? `[CONTEXT: Ja has saludat amb "Hola! Soc el company virtual d'en Saïd". L'usuari acaba d'escriure el seu primer missatge. OBLIGATORI: respon demanant el nom de l'usuari. No presentes opcions ni categories. Només demana el nom.]
+
+Missatge de l'usuari: ${text}`
+        : text;
+      const reply = await sendMessage(geminiHistory, textToSend);
+      setMessages((prev) => [...prev, { role: 'model', text: reply }]);
+      speak(reply);
+    } catch (err) {
+      console.error('Error enviament:', err);
+      setMessages((prev) => [...prev, {
+        role: 'model',
+        text: 'Ho sento, ha hagut un problema tècnic. Torna-ho a provar en uns moments 🙏',
+      }]);
     } finally {
       setLoading(false);
       setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [loading, autoVoice]);
-
-  const getSR = () => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-  const startRecording = useCallback(async () => {
-    const SR = getSR();
-    if (!SR) {
-      alert('El reconeixement de veu no està disponible en aquest navegador.\nProva Safari (iOS 14.5+) o Chrome.');
-      return;
-    }
-    // iOS: demanem permís explícitament primer via getUserMedia
-    // Això força el diàleg de permisos ABANS d'iniciar la gravació
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(t => t.stop()); // Només necessitem el permís, no el stream
-    } catch {
-      alert('Permís de micròfon denegat.\n\niOS: Ves a Configuració > Safari > Micròfon i activa\'l.\nOpera: Ves a Configuració > Privadesa > Micròfon i activa\'l per a aquest lloc.');
-      return;
-    }
-
-    if (recRef.current) { try { recRef.current.abort(); } catch { /**/ } }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rec: any = new SR();
-    recRef.current = rec;
-    // iOS funciona millor amb lang genèric; el model ja detecta l'idioma
-    rec.lang = 'ca-ES';
-    rec.continuous = false;
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rec.onresult = (e: any) => {
-      const t: string = e.results?.[0]?.[0]?.transcript ?? '';
-      stopRecording();
-      if (t.trim()) sendMsg(t, true);
-    };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    rec.onerror = (e: any) => {
-      // 'no-speech' és normal si l'usuari no ha parlat — no mostrem error
-      if (e.error !== 'no-speech' && e.error !== 'aborted') {
-        console.warn('SpeechRecognition error:', e.error);
-      }
-      stopRecording();
-    };
-    rec.onend = () => { stopRecording(); };
-    try {
-      rec.start();
-      setIsRecording(true); setRecordSecs(0);
-      timerRef.current = setInterval(() => setRecordSecs(s => s + 1), 1000);
-    } catch (err) {
-      console.warn('No s\'ha pogut iniciar el micro:', err);
-      setIsRecording(false);
-    }
-  }, [sendMsg]);
-
-  const stopRecording = useCallback(() => {
-    if (recRef.current) {
-      try { recRef.current.stop(); } catch { /**/ }
-      // iOS a vegades no dispara onresult si s'atura molt ràpid — forcem l'aturada
-      try { recRef.current.abort(); } catch { /**/ }
-      recRef.current = null;
-    }
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setIsRecording(false); setRecordSecs(0);
-  }, []);
-
-  const hasSR = !!getSR();
-  const hasTTS = typeof window !== 'undefined' && !!window.speechSynthesis;
-  const fmt = (s: number) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+  }, [input, loading, messages]);
 
   const handleSaveContact = async (phone: string, email: string) => {
-    setShowContactForm(false); setContactSaved(true);
-    const fullChat = messages.map(m => `${m.role==='user'?(userName||'Client'):'Assistent'}: ${m.text}`).join('\n---\n');
-    const userText = messages.filter(m => m.role==='user').map(m => m.text).join(' ').toLowerCase();
-    const kw = ['excel','word','powerpoint','access','outlook','actic','ia ','cloud','microsoft','consultoria'];
-    await saveConversationToSheet({ phone: phone||'—', email: email||'—',
-      summary: `Nom: ${userName||'desconegut'}. ${userText.slice(0,300)}`,
-      courses: kw.filter(k=>userText.includes(k)).join(', ')||'No especificats', fullChat });
-    setMessages(prev => [...prev, { role: 'model',
-      text: `Perfecte, ${userName?userName+'!':''} ✅ He guardat les teves dades.\n\nEn Saïd es posarà en contacte molt aviat 😊\n\nGràcies per confiar en SHformacions!` }]);
+    setShowContactForm(false);
+    setContactSaved(true);
+    const fullChat = messages.map((m) => `${m.role === 'user' ? (userName || 'Client') : 'Assistent'}: ${m.text}`).join('\n---\n');
+    const userText = messages.filter((m) => m.role === 'user').map((m) => m.text).join(' ').toLowerCase();
+    const keywords = ['excel', 'word', 'powerpoint', 'access', 'outlook', 'actic', 'ia ', 'cloud', 'microsoft', 'consultoria'];
+    const coursesFound = keywords.filter((k) => userText.includes(k)).join(', ') || 'No especificats';
+    await saveConversationToSheet({
+      phone: phone || '—',
+      email: email || '—',
+      summary: `Nom: ${userName || 'desconegut'}. ${userText.slice(0, 300)}`,
+      courses: coursesFound,
+      fullChat,
+    });
+    setMessages((prev) => [...prev, {
+      role: 'model',
+      text: `Perfecte, ${userName ? userName + '!' : ''} ✅ He guardat les teves dades.\n\nEn Saïd es posarà en contacte amb tu molt aviat per confirmar disponibilitat i dates 😊\n\nGràcies per confiar en SHformacions!`,
+    }]);
   };
 
   return (
     <div className="fixed z-[60] flex flex-col shadow-2xl border overflow-hidden transition-all duration-300"
-      style={{ bottom: 88, right: 16, width: 'min(360px, calc(100vw - 32px))',
-        height: isMinimized ? 52 : 'min(540px, calc(100vh - 120px))',
-        backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-strong)', borderRadius: 20 }}>
+      style={{
+        bottom: 88, right: 16,
+        width: 'min(360px, calc(100vw - 32px))',
+        height: isMinimized ? 52 : 'min(520px, calc(100vh - 120px))',
+        backgroundColor: 'var(--bg-card)',
+        borderColor: 'var(--border-strong)',
+        borderRadius: 20,
+      }}>
 
       {/* Capçalera */}
       <div className="flex items-center gap-2.5 px-4 h-[52px] flex-shrink-0 cursor-pointer"
@@ -364,120 +358,135 @@ export function ChatBot({ onClose }: ChatBotProps) {
             <p className="text-white/70 text-[10px]">SHformacions · En línia</p>
           </div>
         </div>
-        {hasTTS && (
-          <button onClick={e => { e.stopPropagation(); const n=!autoVoice; setAutoVoice(n); if(!n){window.speechSynthesis?.cancel();setPlayingIdx(null);} }}
-            title={autoVoice ? 'Desactivar veu automàtica' : 'Activar veu automàtica'}
-            className={['w-7 h-7 flex items-center justify-center rounded-full transition-colors', autoVoice?'bg-white/30':'hover:bg-white/10'].join(' ')}>
-            {autoVoice ? <Volume2 size={14} className="text-white" /> : <VolumeX size={14} className="text-white/60" />}
-          </button>
-        )}
-        <button onClick={e => { e.stopPropagation(); setIsMinimized(!isMinimized); }}
+        <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }}
           className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-white/80">
-          <ChevronDown size={16} className={`transition-transform ${isMinimized?'rotate-180':''}`} />
+          <ChevronDown size={16} className={`transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={e => {
-          e.stopPropagation(); window.speechSynthesis?.cancel();
-          const um = messages.filter(m=>m.role==='user');
-          if (um.length>=2 && !contactSaved) {
-            const fullChat = messages.map(m=>`${m.role==='user'?(userName||'Client'):'Assistent'}: ${m.text}`).join('\n');
-            const ut = um.map(m=>m.text).join(' ').toLowerCase();
-            const kw=['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
+        <button onClick={(e) => {
+            e.stopPropagation();
+            const userMessages = messages.filter(m => m.role === 'user');
+            const hasRealContent = userMessages.length >= 2 && userMessages.map(m => m.text).join(' ').length > 15;
 
-            // ── Filtre qualitat: només guardem si hi ha interès real ─────────
-            const greetingOnly = /^[\s,.]*(hola|bon dia|bona tarde?|buenas?|buenos días|hi|hello|hey|ok+|gràcies|gracias|thanks|adeu|adéu|adiós|bye|fins aviat|de res|no res|molt bé|molt be|perfecte)[!\s,.]*$/i;
-            const meaningful = um.filter(m => m.text.trim().length > 15 && !greetingOnly.test(m.text.trim()));
-            const interestKw = ['curs','curso','course','formació','formacion','preu','precio','price',
-              'pressupost','presupuesto','empresa','aprendre','aprender','necesit','necesito',
-              'vull','quiero','quan','cuando','com','cómo','microsoft','excel','word','powerpoint',
-              'access','outlook','actic','ia','cloud','persones','personas','grup','grupo',
-              'hores','horas','dates','fechas','disponible','alumne','alumno'];
-            const hasInterest = interestKw.some(k => ut.includes(k));
-            const worthSaving = meaningful.length >= 1 && hasInterest;
+            if (hasRealContent && !contactSaved) {
+              const fullChat = messages.map((m) =>
+                `${m.role === 'user' ? (userName || 'Client') : 'Assistent'}: ${m.text}`
+              ).join('\n');
+              const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
+              const keywords = ['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
+              const coursesFound = keywords.filter(k => userText.includes(k)).join(', ') || 'No especificats';
 
-            if (worthSaving) {
-              fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({system_instruction:{parts:[{text:'Escriu UN RESUM de max 2 frases. Només el resum.'}]},
-                  contents:[{role:'user',parts:[{text:`CONVERSA:\n${fullChat}\n\nRESUM:`}]}]})
-              }).then(r=>r.json()).then(d=>saveConversationToSheet({phone:'—',email:'—',summary:d.text||`${userName||'Desconegut'}: ${ut.slice(0,200)}`,courses:kw.filter(k=>ut.includes(k)).join(',')||'No especificats',fullChat}))
-                .catch(()=>saveConversationToSheet({phone:'—',email:'—',summary:`${userName||'Desconegut'}: ${ut.slice(0,200)}`,courses:'No especificats',fullChat}));
-            } else {
-              console.log('💬 Conversa descartada: sense contingut rellevant');
+              // Demanem a Gemini un resum real de la conversa
+              fetch('/api/chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  system_instruction: { parts: [{ text: "Analitza la conversa i escriu UN RESUM de maxim 2 frases. Format: [Nom client] interessat en [curs/tema] per a [N persones]. [Si ha deixat contacte: Ha deixat el telefon/correu]. Si no se sap el nom posa 'Client'. Exemple: Maria interessada en Word Inicial per a 10 persones empresa. Ha deixat el correu maria@empresa.cat. IMPORTANT: nomes el resum, sense cap altra cosa." }] },
+                  contents: [{ role: 'user', parts: [{ text: `CONVERSA:\n${fullChat}\n\nESCRIU EL RESUM:` }] }]
+                })
+              }).then(r => r.json()).then(d => {
+                const resum = d.text || `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`;
+                saveConversationToSheet({ phone: '—', email: '—', summary: resum, courses: coursesFound, fullChat });
+              }).catch(() => {
+                saveConversationToSheet({ phone: '—', email: '—', summary: `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`, courses: coursesFound, fullChat });
+              });
             }
-          }
-          onClose();
-        }} className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white">
+            onClose();
+          }}
+          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white">
           <X size={15} />
         </button>
       </div>
 
       {!isMinimized && (
         <>
+          {/* Missatges */}
           <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
-            {messages.map((msg, i) => (
-              <Message key={i} msg={msg} isVoice={voiceIdxs.has(i)}
-                onPlay={msg.role==='model' ? ()=>playMessage(i, msg.text) : undefined}
-                isPlaying={playingIdx===i} />
-            ))}
-            {loading && <div className="flex gap-2 items-start"><RobotAvatar size={28} /><TypingDots /></div>}
-            {showContactForm && !contactSaved && <ContactForm onSave={handleSaveContact} onSkip={()=>setShowContactForm(false)} />}
+            {messages.map((msg, i) => <Message key={i} msg={msg} />)}
+            {loading && (
+              <div className="flex gap-2 items-start">
+                <RobotAvatar size={28} />
+                <TypingDots />
+              </div>
+            )}
+            {showContactForm && !contactSaved && (
+              <ContactForm onSave={handleSaveContact} onSkip={() => setShowContactForm(false)} />
+            )}
             <div ref={bottomRef} />
           </div>
 
+          {/* Input + controls de veu */}
           <div className="flex flex-col border-t flex-shrink-0" style={{ borderColor: 'var(--border-base)' }}>
-            {/* Banner gravació */}
+
+            {/* Selector d'idioma quan el micròfon és actiu */}
             {isRecording && (
-              <div className="flex items-center justify-between px-4 py-2" style={{ backgroundColor: '#fef2f2' }}>
-                <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <VoiceWave color="#ef4444" size={20} />
-                  <span className="text-xs font-bold text-red-600">{fmt(recordSecs)}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-red-500">Gravant... parla ara</span>
-                  <button onClick={stopRecording}
-                    className="flex items-center gap-1 px-2 py-1 rounded-lg bg-red-500 text-white font-semibold" style={{ fontSize: 10 }}>
-                    <StopCircle size={11} /> Atura
+              <div className="flex items-center gap-1.5 px-3 pt-2">
+                <span className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Idioma:</span>
+                {(['ca','es','en','fr'] as const).map(lang => (
+                  <button key={lang}
+                    onClick={() => setRecogLang(lang)}
+                    className={[
+                      'px-2 py-0.5 rounded-lg text-[10px] font-semibold transition-colors',
+                      recogLang === lang ? 'bg-accent-500 text-white' : 'border',
+                    ].join(' ')}
+                    style={recogLang !== lang ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
+                    {lang === 'ca' ? '🇪🇸 CAT' : lang === 'es' ? '🇪🇸 ESP' : lang === 'en' ? '🇬🇧 ENG' : '🇫🇷 FRA'}
                   </button>
-                </div>
+                ))}
               </div>
             )}
 
             <div className="flex items-center gap-1.5 px-3 py-2.5">
-              {hasSR && (
+              {/* Botó micròfon — ocult si el navegador no el suporta */}
+              {/* Micro + Altaveu junts */}
+              {hasSpeechSupport && (
                 <button
-                  // Mòbil: prem i aguanta per gravar, deixa anar per enviar
-                  onTouchStart={e => { e.preventDefault(); if (!isRecording) startRecording(); }}
-                  onTouchEnd={e => { e.preventDefault(); if (isRecording) stopRecording(); }}
-                  onTouchCancel={e => { e.preventDefault(); if (isRecording) stopRecording(); }}
-                  // Escriptori: clic per iniciar/aturar
-                  onMouseDown={e => { if (!('ontouchstart' in window) && !isRecording) startRecording(); }}
-                  onMouseUp={e => { if (!('ontouchstart' in window) && isRecording) stopRecording(); }}
+                  onClick={isRecording ? stopRecording : startRecording}
                   disabled={loading}
-                  title={isRecording ? 'Deixa anar per enviar' : 'Prem i aguanta per parlar'}
-                  className={['w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 select-none',
-                    isRecording ? 'bg-red-500 shadow-lg scale-110' : 'border hover:bg-accent-500/10'].join(' ')}
+                  title={isRecording ? 'Atura gravació' : 'Gravar veu'}
+                  className={[
+                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0',
+                    isRecording ? 'bg-red-500 animate-pulse' : 'border hover:bg-accent-500/10',
+                  ].join(' ')}
                   style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
-                  {isRecording ? <VoiceWave color="white" size={18} /> : <Mic size={16} />}
+                  {isRecording
+                    ? <MicOff size={15} className="text-white" />
+                    : <Mic size={15} />}
                 </button>
               )}
+
+              {/* Toggle resposta de veu — al costat del micro */}
+              <button
+                onClick={() => {
+                  const next = !voiceEnabled;
+                  setVoiceEnabled(next);
+                  if (!next) { window.speechSynthesis?.cancel(); setIsSpeaking(false); }
+                }}
+                title={voiceEnabled ? 'Desactivar veu del bot' : 'Activar veu del bot'}
+                className={[
+                  'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border',
+                  voiceEnabled ? 'bg-accent-500/20 border-accent-500' : '',
+                  isSpeaking ? 'animate-pulse' : '',
+                ].join(' ')}
+                style={!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
+                <Volume2 size={15} className={voiceEnabled ? 'text-accent-500' : ''} />
+              </button>
+
               <input ref={inputRef} type="text" value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key==='Enter'&&!e.shiftKey) { e.preventDefault(); sendMsg(input); } }}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu un missatge...'}
-                className="flex-1 h-10 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
-                style={{ backgroundColor:'var(--bg-input)', color:'var(--text-primary)', borderColor:'var(--border-input)', fontSize:'16px' }}
-                disabled={loading || isRecording} />
-              <button onClick={() => sendMsg(input)} disabled={!input.trim()||loading||isRecording}
-                className="w-10 h-10 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">
-                {loading ? <Loader2 size={15} className="text-white animate-spin" /> : <Send size={15} className="text-white" />}
+                className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
+                disabled={loading} />
+
+              {/* Enviar */}
+              <button onClick={handleSend} disabled={!input.trim() || loading}
+                className="w-9 h-9 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">
+                {loading
+                  ? <Loader2 size={15} className="text-white animate-spin" />
+                  : <Send size={15} className="text-white" />}
               </button>
             </div>
-
-            {hasSR && !isRecording && (
-              <p className="text-center pb-1.5" style={{ fontSize: 9, color: 'var(--text-muted)' }}>
-                🎙️ Prem i aguanta el micro per parlar · {autoVoice ? '🔊 Resposta en veu ON' : '🔇 Toca 🔊 a dalt per activar veu'}
-              </p>
-            )}
           </div>
         </>
       )}

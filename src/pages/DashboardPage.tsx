@@ -4,6 +4,7 @@ import {
   Users, BookOpen, CreditCard, ClipboardList, TrendingUp,
   Plus, ArrowRight, CheckCircle2, Clock, Euro, Edit,
   ToggleLeft, ToggleRight, KeyRound, Shield, RefreshCw,
+  Award,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -18,6 +19,8 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
+import { AdminCloudPanel } from '../components/admin/AdminCloudPanel';
+import { IssueDiplomaModal } from '../components/admin/IssueDiplomaModal';
 import type { DashboardStats, Course, RequestWithDetails, User } from '../types';
 import { formatCurrency, getStatusColor, getInitials } from '../utils/formatters';
 import { formatDate, formatRelative } from '../utils/dateUtils';
@@ -34,7 +37,11 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [resetTarget, setResetTarget] = useState<User | null>(null);
   const [resetting, setResetting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'cloud'>('overview');
+
+  // Diploma issue modal (Entrega 3.4)
+  const [issueOpen, setIssueOpen] = useState(false);
+  const [diplomaReloadKey, setDiplomaReloadKey] = useState(0);
 
   const load = useCallback(async () => {
     try {
@@ -134,12 +141,14 @@ export function DashboardPage() {
 
       {/* Pestanyes */}
       <div className="flex gap-1 bg-[#111] rounded-xl p-1 border border-[#1e1e1e]">
-        {(['overview', 'users'] as const).map((tab) => (
+        {(['overview', 'users', 'cloud'] as const).map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab)}
             className={['flex-1 py-2 rounded-lg text-sm font-medium transition-all',
               activeTab === tab ? 'bg-accent-500 text-white shadow-sm' : 'text-gray-500 hover:text-gray-300',
             ].join(' ')}>
-            {tab === 'overview' ? '📊 Resum' : `👥 Usuaris (${users.length})`}
+            {tab === 'overview' ? '📊 Resum'
+              : tab === 'users' ? `👥 Usuaris (${users.length})`
+              : '☁️ Núvol'}
           </button>
         ))}
       </div>
@@ -294,13 +303,36 @@ export function DashboardPage() {
         </div>
       )}
 
+      {/* ── PESTANYA: NÚVOL ── */}
+      {activeTab === 'cloud' && (
+        <>
+          <div className="flex justify-end mb-3">
+            <Button onClick={() => setIssueOpen(true)} size="sm">
+              <Award size={14} className="mr-1.5" />
+              {t('diploma.issue')}
+            </Button>
+          </div>
+
+          <AdminCloudPanel key={diplomaReloadKey} />
+
+          <IssueDiplomaModal
+            open={issueOpen}
+            onClose={() => setIssueOpen(false)}
+            onIssued={() => {
+              setIssueOpen(false);
+              setDiplomaReloadKey((k) => k + 1);
+            }}
+          />
+        </>
+      )}
+
       {/* Diàleg confirmació reset PIN */}
       <ConfirmDialog
         open={resetTarget !== null}
         onClose={() => setResetTarget(null)}
         onConfirm={handleResetPin}
         title="Reiniciar PIN"
-        message={`Estàs segur/a que vols reiniciar el PIN de "${resetTarget?.name}" a 1234?`}
+        message={`Estàs segur/a que vols reiniciar la contrasenya de "${resetTarget?.name}" a 123456?`}
         loading={resetting}
         variant="warning"
         confirmLabel="Sí, reiniciar"

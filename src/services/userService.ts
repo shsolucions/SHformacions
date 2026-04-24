@@ -74,7 +74,7 @@ export const userService = {
   },
 
   async resetPin(id: number): Promise<void> {
-    const hash = await hashPin('1234');
+    const hash = await hashPin('123456');
     await db.users.update(id, { pinHash: hash, updatedAt: Date.now() });
   },
 

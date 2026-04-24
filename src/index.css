@@ -238,3 +238,34 @@ html.light #root {
 .light .text-on-dark-muted {
   color: rgba(255, 255, 255, 0.65) !important;
 }
+
+/* =====================================================================
+   Suport RTL (àrab) — Entrega 2
+   ===================================================================== */
+
+html[dir="rtl"] {
+  text-align: right;
+}
+
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+html[dir="rtl"] .font-display {
+  font-family: 'Tajawal', 'Cairo', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+html[dir="rtl"] input[type="number"],
+html[dir="rtl"] input[type="tel"],
+html[dir="rtl"] input[type="email"],
+html[dir="rtl"] input[type="url"],
+html[dir="rtl"] input[inputmode="numeric"] {
+  direction: ltr;
+  text-align: right;
+}
+
+html[dir="rtl"] code,
+html[dir="rtl"] .font-mono {
+  direction: ltr;
+  unicode-bidi: embed;
+}

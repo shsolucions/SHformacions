@@ -1,5 +1,7 @@
 export type UserRole = 'admin' | 'user';
-export type Language = 'ca' | 'es' | 'en';
+export type Language =
+  | 'ca' | 'es' | 'en'
+  | 'fr' | 'de' | 'it' | 'pt' | 'nl' | 'ro' | 'ar';
 export type Theme = 'dark' | 'light';
 
 export type CourseCategory =
@@ -162,4 +164,88 @@ export interface SavedCourse { courseId: number; savedAt: number; }
 export interface SavedCourse {
   courseId: number;
   addedAt: number;
+}
+
+// =====================================================================
+// CLOUD TYPES (Entrega 3.2)
+// =====================================================================
+
+/**
+ * ID d'usuari polimòrfic (Dexie o Supabase).
+ * A la pràctica session.userId sempre és number (mirror Dexie).
+ */
+export type UserId = number | string;
+
+export interface CloudBudgetItem {
+  courseId?: number | string;
+  name: string;
+  price: number;
+  qty: number;
+  discount?: number;
+  notes?: string;
+}
+
+export type CloudBudgetStatus = 'draft' | 'sent' | 'accepted' | 'rejected';
+
+export interface CloudBudget {
+  id: string;
+  user_id: string;
+  title: string;
+  items: CloudBudgetItem[];
+  total: number;
+  currency: string;
+  status: CloudBudgetStatus;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type CloudUserCourseStatus =
+  | 'interested' | 'enrolled' | 'completed' | 'cancelled';
+
+export interface CloudUserCourse {
+  id: string;
+  user_id: string;
+  course_key: string;
+  course_name: string;
+  status: CloudUserCourseStatus;
+  progress: number;
+  enrolled_at?: string;
+  completed_at?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CloudDiploma {
+  id: string;
+  user_id: string;
+  course_key: string;
+  course_name: string;
+  student_name?: string;
+  hours?: number;
+  issued_at: string;
+  pdf_url?: string;
+  verification_code?: string;
+  issued_by?: string;
+  created_at?: string;
+}
+
+export interface CloudProfile {
+  id: string;
+  nickname: string;
+  name: string;
+  email?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminCloudStats {
+  total_users: number;
+  total_budgets: number;
+  total_diplomas: number;
+  total_enrollments: number;
+  recent_budgets: CloudBudget[];
+  recent_users: CloudProfile[];
+  recent_diplomas: CloudDiploma[];
 }
