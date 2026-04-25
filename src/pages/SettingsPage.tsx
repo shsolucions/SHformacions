@@ -213,7 +213,7 @@ export function SettingsPage() {
         <div className="flex flex-col gap-3">
           <InfoRow label={t('settings.app_name')} value="SHformacions" />
           <AppVersionRow label={t('settings.app_version')} />
-          <InfoRow label="SH Solucions" value="© 2025" />
+          <InfoRow label="SH Solucions" value={`© ${new Date().getFullYear()}`} />
         </div>
       </Card>
 
