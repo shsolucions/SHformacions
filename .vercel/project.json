@@ -1,4 +1,16 @@
 {
   "projectId": "prj_joDj2BuPOdWJA8jQFlons3mxOQPl",
-  "orgId": "team_UTNEQNhrz9ELNWTHvHYBM79L"
+  "orgId": "team_UTNEQNhrz9ELNWTHvHYBM79L",
+  "projectName": "sh-formacions",
+  "settings": {
+    "createdAt": 1775250723253,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
 }

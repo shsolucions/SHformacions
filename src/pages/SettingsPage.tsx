@@ -212,7 +212,7 @@ export function SettingsPage() {
         <CardHeader title={t('settings.app_info')} icon={<Info size={18} />} />
         <div className="flex flex-col gap-3">
           <InfoRow label={t('settings.app_name')} value="SHformacions" />
-          <InfoRow label={t('settings.app_version')} value="1.0.0" />
+          <AppVersionRow label={t('settings.app_version')} />
           <InfoRow label="SH Solucions" value="© 2025" />
         </div>
       </Card>
@@ -262,6 +262,13 @@ export function SettingsPage() {
       {isAdmin && <SyncAdminPanel />}
     </div>
   );
+}
+
+function AppVersionRow({ label }: { label: string }) {
+  const d = new Date(__BUILD_TIME__);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const version = `1.0.0 · ${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return <InfoRow label={label} value={version} />;
 }
 
 function BuildInfo() {

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cd \"D:\\\\01 APP\\\\SHformacio\"; $env:VERCEL_TOKEN = [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\); if \\(-not $env:VERCEL_TOKEN\\) { Write-Host \"ERROR: VERCEL_TOKEN no trobat\"; exit 1 }; Write-Host \"Token OK, desplegant a Production...\"; vercel deploy --prod --prebuilt --token=$env:VERCEL_TOKEN --yes 2>&1)",
+      "PowerShell(cd \"D:\\\\01 APP\\\\SHformacio\"; $token = [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\); vercel deploy --prod --token=$token --yes 2>&1)"
+    ]
+  }
+}
