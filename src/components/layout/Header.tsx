@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, LogOut, User, Sun, Moon, LayoutDashboard, X, Lock } from 'lucide-react';
+import { LogOut, User, Sun, Moon, LayoutDashboard, X, Lock } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useNotifications } from '../../context/NotificationContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { availableLanguages } from '../../i18n';
@@ -159,7 +158,6 @@ function AdminAccessModal({ open, onClose, onSubmit, error }: AdminModalProps) {
 
 export function Header() {
   const { session, logout, isAdmin, login } = useAuth();
-  const { unreadCount } = useNotifications();
   const { language, setLanguage } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -286,22 +284,6 @@ export function Header() {
                 </div>
               )}
             </div>
-
-            {/* Notificacions */}
-            {session && (
-              <Link
-                to="/notificacions"
-                className={btnCls + " relative text-gray-400 hover:text-white hover:bg-white/5"}
-                aria-label="Notificacions"
-              >
-                <Bell size={20} />
-                {unreadCount > 0 && (
-                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 rounded-full bg-accent-500 text-white text-[9px] font-bold flex items-center justify-center px-1">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </Link>
-            )}
 
             {/* Accés admin — només visible si ja estem loguejats com admin */}
             {isAdmin && (

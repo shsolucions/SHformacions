@@ -5,7 +5,12 @@
       "PowerShell(cd \"D:\\\\01 APP\\\\SHformacio\"; $token = [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\); vercel deploy --prod --token=$token --yes 2>&1)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "PowerShell(cd \"D:\\\\01 APP\\\\SHformacio\"; $token = [System.Environment]::GetEnvironmentVariable\\(\"VERCEL_TOKEN\", \"Machine\"\\); vercel deploy --prod --token=$token --yes 2>&1 | Select-String -Pattern \"Aliased:|Error\")",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__deploy_edge_function",
+      "Bash(xargs grep *)",
+      "Bash(npm run *)"
     ]
   }
 }

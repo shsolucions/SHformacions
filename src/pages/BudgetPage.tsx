@@ -9,6 +9,8 @@ import { useTranslation } from '../context/LanguageContext';
 import { courseService } from '../services/courseService';
 import { getSheetPrices } from '../services/sheetsService';
 import { whatsappService } from '../services/whatsappService';
+import { supabase } from '../services/supabase';
+import { authService } from '../services/authService';
 import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
 import { Button } from '../components/ui/Button';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -21,7 +23,7 @@ export function BudgetPage() {
   const { session } = useAuth();
   const { openAuthModal } = useAuthModal();
   const { showToast } = useToast();
-  const { cartItems, cartIds, removeFromCart, setQty, clearCart, cartCount } = useCart();
+  const { cartItems, cartIds, removeFromCart, setQty, clearCart, cartCount, addToCart } = useCart();
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
   const [budgetSaved, setBudgetSaved] = useState(false);
@@ -38,6 +40,33 @@ export function BudgetPage() {
   }, [cartIds]);
 
   useEffect(() => { loadCourses(); }, [loadCourses]);
+
+  // Restaura el pressupost des del núvol quan el cart és buit i l'usuari és cloud
+  useEffect(() => {
+    if (!session || cartIds.length > 0) return;
+    const uid = authService.getSupabaseUid();
+    if (!uid || !supabase) return;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('budgets')
+          .select('items')
+          .eq('status', 'draft')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (!data?.items || !Array.isArray(data.items)) return;
+        (data.items as Array<{ courseId?: number | string; qty?: number }>).forEach((item) => {
+          const id = typeof item.courseId === 'string' ? Number(item.courseId) : item.courseId;
+          if (id && !isNaN(id)) {
+            addToCart(id);
+            if ((item.qty ?? 1) > 1) setQty(id, item.qty!);
+          }
+        });
+      } catch { /* ignore */ }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     getSheetPrices().then(prices => {
@@ -93,9 +122,34 @@ export function BudgetPage() {
     showToast('Pressupost enviat per WhatsApp!', 'success');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (session) {
       localStorage.setItem(`shformacions_saved_${session.userId}`, JSON.stringify(cartItems));
+
+      // Desa al núvol si l'usuari té compte Supabase (cross-device)
+      const uid = authService.getSupabaseUid();
+      if (uid && supabase && courses.length > 0) {
+        const items = courses.map((c) => ({
+          courseId: c.id,
+          name: c.name,
+          price: getCoursePrice(c),
+          qty: getQty(c.id!),
+          discount: getDiscount(getQty(c.id!)),
+        }));
+        const { data: existing } = await supabase
+          .from('budgets')
+          .select('id')
+          .eq('status', 'draft')
+          .order('updated_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (existing?.id) {
+          await supabase.from('budgets').update({ items, total: subtotal, updated_at: new Date().toISOString() }).eq('id', existing.id);
+        } else {
+          await supabase.from('budgets').insert({ user_id: uid, items, total: subtotal, title: 'Pressupost', status: 'draft' });
+        }
+      }
+
       setBudgetSaved(true);
       showToast('Pressupost guardat ✓', 'success');
     } else {
