@@ -136,12 +136,9 @@ function setSession(user: User, supabaseUid?: string): Session {
 async function resolveEmailByNickname(nickname: string): Promise<string | null> {
   if (!supabase) return null;
   const { data, error } = await supabase
-    .from('profiles')
-    .select('email')
-    .eq('nickname', nickname)
-    .maybeSingle();
-  if (error || !data?.email) return null;
-  return data.email;
+    .rpc('get_email_by_nickname', { p_nickname: nickname });
+  if (error || !data) return null;
+  return data as string;
 }
 
 function mapSupabaseError(err: { message?: string; status?: number }): AuthErrorCode {

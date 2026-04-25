@@ -207,5 +207,26 @@ create trigger on_auth_user_created
   for each row execute function public.handle_new_user();
 
 -- =====================================================================
+-- FUNCIONS PÚBLIQUES (security definer — bypass RLS controlat)
+-- =====================================================================
+
+-- Necessària per al login cross-device: el client crida aquesta funció
+-- ABANS d'autenticar-se, per resoldre el nickname → email.
+-- Retorna null si el nickname no existeix.
+create or replace function public.get_email_by_nickname(p_nickname text)
+returns text
+language sql security definer stable
+set search_path = public
+as $$
+  select email
+  from public.profiles
+  where lower(nickname) = lower(p_nickname)
+  limit 1;
+$$;
+
+-- Permet que qualsevol cridi la funció (inclòs usuari anònim)
+grant execute on function public.get_email_by_nickname(text) to anon, authenticated;
+
+-- =====================================================================
 -- FI DE L'SCRIPT
 -- =====================================================================
