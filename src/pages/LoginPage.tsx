@@ -86,7 +86,7 @@ export function LoginPage() {
               placeholder={t('auth.nickname_placeholder')}
               value={nickname}
               onChange={(e) => setNickname(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter' && pin.length === 4) handleSubmit(); }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && pin.length >= 6) handleSubmit(); }}
               icon={<User size={15} />}
               autoCapitalize="none"
               autoComplete="username"
@@ -98,7 +98,7 @@ export function LoginPage() {
             </div>
 
             <Button fullWidth onClick={handleSubmit} loading={loading}
-              disabled={pin.length !== 4 || !nickname.trim()}>
+              disabled={pin.length < 6 || !nickname.trim()}>
               {t('auth.login_btn')}
             </Button>
           </div>

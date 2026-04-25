@@ -1,6 +1,6 @@
 // ── Servei preus en temps real del Google Sheets ─────────────────────────────
 const SHEET_ID = '1v_w1Gh3K5MiyrlMubPw5pZKXoCjHO85BSq7aR0ka60Q';
-const CACHE_MS = 5 * 60 * 1000;
+const CACHE_MS = 2 * 60 * 1000;
 
 export interface SheetPrice {
   name: string;

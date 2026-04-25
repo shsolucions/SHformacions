@@ -4,6 +4,7 @@ import { ArrowRight, Star, Users, Award, Zap, BookOpen } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { courseService } from '../services/courseService';
+import { useSheetPrices } from '../hooks/useSheetPrices';
 import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/CourseIcon';
 const PNG_CATS = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
@@ -26,6 +27,7 @@ export function HomePage() {
   const { isDark } = useTheme();
   const [featured, setFeatured] = useState<Course[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
+  const { getPrice } = useSheetPrices();
 
   const location = useLocation();
 
@@ -34,14 +36,39 @@ export function HomePage() {
     const load = () => {
       courseService.getAll().then((all) => {
         if (cancelled) return;
-        setFeatured(all.filter((c) => c.status === 'active' && c.category !== 'it_repair').slice(0, 4));
+        const active = all.filter((c) => c.status === 'active');
+
+        // Selecció fixa dels destacats:
+        //   1. Excel intermedi
+        //   2. Excel avançat
+        //   3. ACTIC bàsic (Nivell 1)
+        //   4. ACTIC intermedi (Nivell 2)
+        //   5-6. Els 2 cursos d'IA més cars
+        const findOne = (cat: string, lvl: string) =>
+          active.find((c) => c.category === cat && c.level === lvl);
+
+        const excelInt  = findOne('excel', 'intermediate');
+        const excelAdv  = findOne('excel', 'advanced');
+        const acticBas  = findOne('actic', 'basic');
+        const acticInt  = findOne('actic', 'intermediate');
+
+        const aiCourses = active
+          .filter((c) => c.category === 'ai' || c.category === 'ia')
+          .sort((a, b) => b.price - a.price)
+          .slice(0, 2);
+
+        const fixedFeatured = [
+          excelInt, excelAdv, acticBas, acticInt, ...aiCourses,
+        ].filter((c): c is Course => Boolean(c));
+
+        setFeatured(fixedFeatured);
+
         const c: Record<string, number> = {};
         all.forEach((course) => { c[course.category] = (c[course.category] || 0) + 1; });
         setCounts(c);
       });
     };
     load();
-    // Refresca quan la pestanya torna a ser visible (després d'editar un curs)
     const onFocus = () => load();
     window.addEventListener('focus', onFocus);
     return () => {
@@ -138,7 +165,7 @@ export function HomePage() {
           </div>
           <div className="flex flex-col gap-2.5">
             {featured.map((course) => (
-              <FeaturedCourseCard key={course.id} course={course} t={t} />
+              <FeaturedCourseCard key={course.id} course={course} t={t} getPrice={getPrice} />
             ))}
           </div>
         </div>
@@ -182,8 +209,14 @@ function AppVersionBadge() {
   );
 }
 
-function FeaturedCourseCard({ course, t }: { course: Course; t: (k: string) => string }) {
+function FeaturedCourseCard({ course, t, getPrice }: {
+  course: Course;
+  t: (k: string) => string;
+  getPrice: (name: string, fallback: number) => number;
+}) {
   const grad = categoryGradients[course.category] ?? 'from-gray-700 to-gray-900';
+  // Preu en temps real del Google Sheet (fallback al preu Dexie si no hi és)
+  const livePrice = getPrice(course.name, course.price);
   return (
     <Link to={`/cursos/${course.id}`}
       className={`flex items-center gap-3 bg-gradient-to-r ${grad} rounded-2xl p-3.5 hover:opacity-95 transition-all`}
@@ -198,7 +231,7 @@ function FeaturedCourseCard({ course, t }: { course: Course; t: (k: string) => s
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className="text-sm font-black text-white tabular-nums">
-          {course.price === 0 ? 'Gratuït' : formatCurrency(course.price)}
+          {livePrice === 0 ? 'Gratuït' : formatCurrency(livePrice)}
         </span>
         <ArrowRight size={14} className="text-white/50" />
       </div>

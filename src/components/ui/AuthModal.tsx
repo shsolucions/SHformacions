@@ -121,7 +121,7 @@ export function AuthModal() {
               <PinInput label={t('auth.pin')} value={pin} onChange={setPin} error={!!error} />
               {error && <p className="text-xs text-red-400 text-center">{error}</p>}
               <Button fullWidth onClick={handleLogin} loading={loading}
-                disabled={pin.length !== 4 || !nickname.trim()}>
+                disabled={pin.length < 6 || !nickname.trim()}>
                 {t('auth.login_btn')}
               </Button>
               <p className="text-center text-xs text-gray-500">
@@ -151,7 +151,7 @@ export function AuthModal() {
                 error={confirmPin.length === 4 && pin !== confirmPin} />
               {error && <p className="text-xs text-red-400 text-center">{error}</p>}
               <Button fullWidth onClick={handleRegister} loading={loading}
-                disabled={pin.length !== 4 || !nickname.trim() || !name.trim()}>
+                disabled={pin.length < 6 || !nickname.trim() || !name.trim()}>
                 {t('auth.register_btn')}
               </Button>
               <p className="text-center text-xs text-gray-500">
