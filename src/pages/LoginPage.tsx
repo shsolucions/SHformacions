@@ -45,9 +45,10 @@ export function LoginPage() {
       </div>
 
       {/* Botó tornar */}
-      <div className="relative px-5 pt-5">
+      <div className="relative px-5" style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}>
         <button onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors text-sm">
+          className="flex items-center gap-1.5 transition-colors text-sm hover:opacity-80"
+          style={{ color: 'var(--text-secondary)' }}>
           <ArrowLeft size={15} /> Tornar a l'inici
         </button>
       </div>
@@ -66,14 +67,17 @@ export function LoginPage() {
               <div className="absolute -inset-1 rounded-[28px] border border-accent-500/20 animate-pulse-slow" />
             </div>
             <div className="text-center">
-              <h1 className="text-3xl font-black text-white font-display">SHformacions</h1>
-              <p className="text-gray-500 text-sm mt-1">{t('app.tagline')}</p>
+              <h1 className="text-3xl font-black font-display flex items-center justify-center gap-1.5">
+                <span className="text-accent-400">SH</span>
+                <span style={{ color: 'var(--text-primary)' }}>formacions</span>
+              </h1>
+              <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>{t('app.tagline')}</p>
             </div>
           </div>
 
           {/* Formulari */}
           <div className="rounded-2xl p-6 flex flex-col gap-5 border" style={{ backgroundColor: "var(--bg-card)", borderColor: "var(--border-base)" }}>
-            <h2 className="text-center text-base font-semibold text-white font-display">
+            <h2 className="text-center text-base font-semibold font-display" style={{ color: 'var(--text-primary)' }}>
               {t('auth.login')}
             </h2>
 

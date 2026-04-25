@@ -55,9 +55,10 @@ export function RegisterPage() {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[300px] bg-accent-500/6 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative px-5 pt-5">
+      <div className="relative px-5" style={{ paddingTop: 'max(1.25rem, env(safe-area-inset-top))' }}>
         <button onClick={() => navigate('/')}
-          className="flex items-center gap-1.5 text-gray-500 hover:text-white transition-colors text-sm">
+          className="flex items-center gap-1.5 transition-colors text-sm hover:opacity-80"
+          style={{ color: 'var(--text-secondary)' }}>
           <ArrowLeft size={15} /> Tornar
         </button>
       </div>
@@ -69,8 +70,8 @@ export function RegisterPage() {
             <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-accent-500/30 shadow-xl">
               <img src="/robot-icon.png" alt="SHformacions" className="w-full h-full object-cover" />
             </div>
-            <h1 className="text-2xl font-black text-white font-display">Crear compte</h1>
-            <p className="text-xs text-gray-500 text-center">
+            <h1 className="text-2xl font-black font-display" style={{ color: 'var(--text-primary)' }}>Crear compte</h1>
+            <p className="text-xs text-center" style={{ color: 'var(--text-secondary)' }}>
               Gratuït · Guarda els teus cursos i rep el pressupost per WhatsApp
             </p>
           </div>

@@ -51,7 +51,6 @@ export const availableLanguages: {
   rtl?: boolean;
 }[] = [
   { code: 'ca', label: 'Català',     flag: '🏴' },
-  { code: 'es', label: 'Español',    flag: '🇪🇸' },
   { code: 'en', label: 'English',    flag: '🇬🇧' },
   { code: 'fr', label: 'Français',   flag: '🇫🇷' },
   { code: 'de', label: 'Deutsch',    flag: '🇩🇪' },
@@ -59,6 +58,7 @@ export const availableLanguages: {
   { code: 'pt', label: 'Português',  flag: '🇵🇹' },
   { code: 'nl', label: 'Nederlands', flag: '🇳🇱' },
   { code: 'ro', label: 'Română',     flag: '🇷🇴' },
+  { code: 'es', label: 'Español',    flag: '🇪🇸' },
   { code: 'ar', label: 'العربية',    flag: '🇸🇦', rtl: true },
 ];
 

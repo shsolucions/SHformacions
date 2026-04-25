@@ -9,8 +9,8 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
-      injectRegister: null,
+      registerType: 'prompt',
+      injectRegister: 'auto',
       includeAssets: [
         'robot-icon.png', 'SHbot.png', 'robot-full.png',
         'logo-word.png', 'logo-excel.png', 'logo-access.png',

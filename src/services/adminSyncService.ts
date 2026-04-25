@@ -24,6 +24,7 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 
 const LAST_PUSH_KEY = 'shformacions_last_push';
 const LAST_PULL_KEY = 'shformacions_last_pull';
+const LAST_SYNC_COUNT_KEY = 'shformacions_last_sync_count';
 const DEVICE_ID_KEY = 'shformacions_device_id';
 
 export type SyncEntity = 'courses';
@@ -122,6 +123,7 @@ export const adminSyncService = {
 
     const at = new Date().toISOString();
     localStorage.setItem(LAST_PUSH_KEY, at);
+    localStorage.setItem(LAST_SYNC_COUNT_KEY, String(items.length));
 
     return {
       ok: response.ok,
@@ -151,6 +153,7 @@ export const adminSyncService = {
 
     const at = new Date().toISOString();
     localStorage.setItem(LAST_PULL_KEY, at);
+    localStorage.setItem(LAST_SYNC_COUNT_KEY, String(response.items.length));
 
     return {
       ok: true,

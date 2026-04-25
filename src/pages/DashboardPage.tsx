@@ -98,7 +98,7 @@ export function DashboardPage() {
             </div>
             <span className="text-xs font-bold text-accent-400 uppercase tracking-widest">Administrador</span>
           </div>
-          <h1 className="text-2xl font-black text-white font-display mt-1">
+          <h1 className="text-2xl font-black font-display mt-1" style={{ color: 'var(--text-primary)' }}>
             Hola, {session?.name?.split(' ')[0]} 👋
           </h1>
         </div>

@@ -6,6 +6,7 @@ import { useNotifications } from '../../context/NotificationContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { availableLanguages } from '../../i18n';
+import { AppUpdateIcon } from '../AppUpdateIcon';
 import type { Language } from '../../types';
 
 // Config de l'accés admin ocult
@@ -238,6 +239,9 @@ export function Header() {
 
           {/* Accions de la dreta */}
           <div className="flex items-center gap-0.5">
+
+            {/* Indicador d'actualització de l'app — visible per a tots */}
+            <AppUpdateIcon />
 
             {/* Toggle tema — SOL (clar) o LLUNA (fosc) */}
             <button

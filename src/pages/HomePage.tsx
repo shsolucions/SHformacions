@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ArrowRight, Star, Users, Award, Zap, BookOpen } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
@@ -27,14 +27,28 @@ export function HomePage() {
   const [featured, setFeatured] = useState<Course[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
+  const location = useLocation();
+
   useEffect(() => {
-    courseService.getAll().then((all) => {
-      setFeatured(all.filter((c) => c.status === 'active' && c.category !== 'it_repair').slice(0, 4));
-      const c: Record<string, number> = {};
-      all.forEach((course) => { c[course.category] = (c[course.category] || 0) + 1; });
-      setCounts(c);
-    });
-  }, []);
+    let cancelled = false;
+    const load = () => {
+      courseService.getAll().then((all) => {
+        if (cancelled) return;
+        setFeatured(all.filter((c) => c.status === 'active' && c.category !== 'it_repair').slice(0, 4));
+        const c: Record<string, number> = {};
+        all.forEach((course) => { c[course.category] = (c[course.category] || 0) + 1; });
+        setCounts(c);
+      });
+    };
+    load();
+    // Refresca quan la pestanya torna a ser visible (després d'editar un curs)
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [location.pathname, location.key]);
 
   return (
     <div className="flex flex-col gap-7 -mt-2">
