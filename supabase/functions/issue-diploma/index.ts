@@ -319,9 +319,9 @@ async function generateDiplomaPdf(params: {
     size: 6, font: helv, color: navy,
   });
   // Cinta del segell (simplificada)
-  page.drawText('★', {
-    x: seal.cx - 4, y: seal.cy + 18,
-    size: 12, font: timesB, color: gold,
+  page.drawText('*', {
+    x: seal.cx - 5, y: seal.cy + 16,
+    size: 14, font: timesB, color: gold,
   });
 
   // Codi de verificació (cantonada inferior dreta, text petit)

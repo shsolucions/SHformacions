@@ -1,25 +1,28 @@
 import React, { useRef, useState } from 'react';
 import {
   Globe, Moon, Sun, Download, Upload, Info,
-  Trash2, CloudOff, Check,
+  Trash2, CloudOff, Check, Bell, CheckCheck,
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../context/ToastContext';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { backupService } from '../services/backupService';
 import { Button } from '../components/ui/Button';
 import { Card, CardHeader } from '../components/ui/Card';
 import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { SyncAdminPanel } from '../components/admin/SyncAdminPanel';
 import { availableLanguages } from '../i18n';
-import type { BackupData } from '../types';
+import type { BackupData, Notification } from '../types';
+import { formatRelative } from '../utils/dateUtils';
 
 export function SettingsPage() {
   const { t, language, setLanguage } = useLanguage();
   const { theme, setTheme } = useTheme();
   const { showToast } = useToast();
-  const { isAdmin } = useAuth();
+  const { isAdmin, session } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -192,6 +195,49 @@ export function SettingsPage() {
         </div>
       </Card>
 
+      {/* Avisos / Notificacions */}
+      {session && (
+        <Card>
+          <CardHeader
+            title={t('notifications.title')}
+            icon={<Bell size={18} />}
+            action={
+              notifications.length > 0 ? (
+                <div className="flex gap-2">
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={() => markAllAsRead().then(() => showToast(t('notifications.all_read'), 'success'))}
+                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5"
+                    >
+                      <CheckCheck size={13} />
+                      {t('notifications.mark_all_read')}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => clearAll().then(() => showToast(t('notifications.cleared'), 'success'))}
+                    className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg hover:bg-red-500/5"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ) : undefined
+            }
+          />
+          {notifications.length === 0 ? (
+            <div className="flex items-center gap-3 p-3 bg-[#1a1a1a] rounded-xl">
+              <Bell size={18} className="text-gray-600" />
+              <p className="text-sm text-gray-500">{t('notifications.no_notifications')}</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {notifications.slice(0, 10).map((n) => (
+                <NotificationRow key={n.id} notification={n} onRead={() => { if (!n.read) markAsRead(n.id!); }} />
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
       {/* Cloud sync (coming soon) */}
       <Card>
         <CardHeader title={t('settings.cloud_sync')} icon={<CloudOff size={18} />} />
@@ -290,5 +336,32 @@ function InfoRow({ label, value }: { label: string; value: string }) {
       <span className="text-gray-500">{label}</span>
       <span className="text-white font-medium">{value}</span>
     </div>
+  );
+}
+
+function NotificationRow({ notification: n, onRead }: { notification: Notification; onRead: () => void }) {
+  const dotColor =
+    n.type === 'success' ? 'bg-green-400' :
+    n.type === 'warning' ? 'bg-yellow-400' :
+    n.type === 'error'   ? 'bg-red-400' :
+    'bg-accent-400';
+
+  return (
+    <button
+      onClick={onRead}
+      className={[
+        'w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all',
+        n.read ? 'bg-[#141414] border-[#222] opacity-60' : 'bg-[#1a1a1a] border-[#2a2a2a]',
+      ].join(' ')}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          {!n.read && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />}
+          <p className="text-sm font-semibold text-white leading-snug truncate">{n.title}</p>
+        </div>
+        <p className="text-xs text-gray-400 mt-0.5 leading-snug">{n.message}</p>
+        <p className="text-xs text-gray-600 mt-1">{formatRelative(n.createdAt)}</p>
+      </div>
+    </button>
   );
 }

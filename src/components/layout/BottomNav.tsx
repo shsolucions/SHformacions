@@ -1,14 +1,12 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, BookOpen, CalendarDays, Settings, LayoutDashboard, Wallet, Bell } from 'lucide-react';
+import { Home, BookOpen, CalendarDays, Settings, LayoutDashboard, Wallet, Award } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTranslation } from '../../context/LanguageContext';
-import { useNotifications } from '../../context/NotificationContext';
 
 export function BottomNav() {
   const { isAdmin, isAuthenticated } = useAuth();
   const { t } = useTranslation();
-  const { unreadCount } = useNotifications();
 
   const linkCls = ({ isActive }: { isActive: boolean }) =>
     `flex flex-col items-center gap-0.5 min-w-[44px] min-h-[44px] justify-center px-2 rounded-xl transition-colors relative ${
@@ -44,14 +42,9 @@ export function BottomNav() {
         )}
 
         {isAuthenticated && (
-          <NavLink to="/notificacions" className={linkCls}>
-            <Bell size={22} />
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] rounded-full bg-accent-500 text-white text-[8px] font-bold flex items-center justify-center px-0.5">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-            <span className="text-[10px] font-medium">Avisos</span>
+          <NavLink to="/diplomes" className={linkCls}>
+            <Award size={22} />
+            <span className="text-[10px] font-medium">Diplomes</span>
           </NavLink>
         )}
 

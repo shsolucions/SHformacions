@@ -10,7 +10,8 @@
       "mcp__claude_ai_Supabase__list_projects",
       "mcp__claude_ai_Supabase__deploy_edge_function",
       "Bash(xargs grep *)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "mcp__claude_ai_Vercel__deploy_to_vercel"
     ]
   }
 }
