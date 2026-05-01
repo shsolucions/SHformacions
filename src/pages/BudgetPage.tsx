@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart, Trash2, ArrowRight, Save, BookOpen, Euro, Clock, CheckCircle, Minus, Plus, Mail, Smartphone, CreditCard, Banknote, Building2 } from 'lucide-react';
+import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useAuthModal } from '../context/AuthModalContext';
@@ -29,6 +30,52 @@ function PayMethodChip({ icon, label, sub, color }: {
       {icon}
       <span>{label}</span>
       {sub && <span className="font-normal opacity-75 text-[10px]">{sub}</span>}
+    </div>
+  );
+}
+
+const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID ?? '';
+
+function PayPalDirect({ amount, description, onSuccess, onError }: {
+  amount: number;
+  description: string;
+  onSuccess: () => void;
+  onError: () => void;
+}) {
+  if (!PAYPAL_CLIENT_ID || amount <= 0) return null;
+  return (
+    <div className="rounded-2xl border overflow-hidden" style={{ borderColor: '#009CDE40', backgroundColor: 'var(--bg-card)' }}>
+      <div className="px-4 py-3 border-b flex items-center gap-2" style={{ borderColor: '#009CDE25', backgroundColor: '#009CDE08' }}>
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="#009CDE">
+          <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+        </svg>
+        <span className="text-xs font-semibold" style={{ color: '#009CDE' }}>Pagar ara amb PayPal</span>
+        <span className="ml-auto text-sm font-black tabular-nums" style={{ color: '#009CDE' }}>
+          {amount.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' })}
+        </span>
+      </div>
+      <div className="px-4 py-3">
+        <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'EUR' }}>
+          <PayPalButtons
+            style={{ layout: 'horizontal', color: 'blue', shape: 'rect', label: 'paypal', height: 44, tagline: false }}
+            createOrder={(_data, actions) => {
+              return actions.order.create({
+                intent: 'CAPTURE',
+                purchase_units: [{
+                  description: description.slice(0, 127),
+                  amount: { currency_code: 'EUR', value: amount.toFixed(2) },
+                }],
+              });
+            }}
+            onApprove={async (_data, actions) => {
+              if (!actions.order) return;
+              await actions.order.capture();
+              onSuccess();
+            }}
+            onError={onError}
+          />
+        </PayPalScriptProvider>
+      </div>
     </div>
   );
 }
@@ -355,6 +402,17 @@ export function BudgetPage() {
           </div>
         </div>
       </div>
+
+      {/* PAGAMENT PAYPAL DIRECTE */}
+      <PayPalDirect
+        amount={subtotal}
+        description={courses.map(c => `${c.name} ×${getQty(c.id!)}`).join(', ')}
+        onSuccess={() => {
+          showToast('Pagament completat! Gràcies 🎉 Ens posarem en contacte aviat.', 'success');
+          clearCart();
+        }}
+        onError={() => showToast('Error al processar el pagament. Torneu-ho a provar.', 'error')}
+      />
 
       {/* ACCIONS: WhatsApp + Email costat a costat */}
       <div className="flex flex-col gap-2.5">
