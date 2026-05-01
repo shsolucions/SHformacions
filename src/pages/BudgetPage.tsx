@@ -384,7 +384,7 @@ export function BudgetPage() {
             Formes de pagament acceptades
           </p>
           <div className="flex flex-wrap gap-2 justify-center">
-            <PayMethodChip icon={<Smartphone size={13} />} label="Bizum" sub="660 137 163" color="text-green-400 bg-green-500/10 border-green-500/25" />
+            <PayMethodChip icon={<Smartphone size={13} />} label="Bizum" color="text-green-400 bg-green-500/10 border-green-500/25" />
             <PayMethodChip icon={<CreditCard size={13} />} label="Targeta" color="text-blue-400 bg-blue-500/10 border-blue-500/25" />
             <PayMethodChip
               icon={
