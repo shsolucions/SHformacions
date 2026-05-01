@@ -339,18 +339,18 @@ Missatge de l'usuari: ${text}`
     <div className="fixed z-[60] flex flex-col shadow-2xl border overflow-hidden transition-all duration-300"
       style={{
         bottom: 88, right: 16,
-        width: 'min(360px, calc(100vw - 32px))',
-        height: isMinimized ? 52 : 'min(520px, calc(100vh - 120px))',
+        width: 'min(380px, calc(100vw - 24px))',
+        height: isMinimized ? 56 : 'min(530px, calc(100svh - 110px))',
         backgroundColor: 'var(--bg-card)',
         borderColor: 'var(--border-strong)',
         borderRadius: 20,
       }}>
 
       {/* Capçalera */}
-      <div className="flex items-center gap-2.5 px-4 h-[52px] flex-shrink-0 cursor-pointer"
-        style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)' }}
+      <div className="flex items-center gap-2.5 px-3 flex-shrink-0 cursor-pointer"
+        style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)', height: 56 }}
         onClick={() => setIsMinimized(!isMinimized)}>
-        <RobotAvatar size={32} />
+        <RobotAvatar size={34} />
         <div className="flex-1 min-w-0">
           <p className="text-white text-sm font-semibold leading-none">Assistent Virtual</p>
           <div className="flex items-center gap-1.5 mt-0.5">
@@ -359,10 +359,11 @@ Missatge de l'usuari: ${text}`
           </div>
         </div>
         <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }}
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/10 transition-colors text-white/80">
-          <ChevronDown size={16} className={`transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors text-white/80"
+          aria-label={isMinimized ? 'Expandir' : 'Minimitzar'}>
+          <ChevronDown size={18} className={`transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
         </button>
-        <button onClick={(e) => {
+        <button aria-label="Tancar" onClick={(e) => {
             e.stopPropagation();
             const userMessages = messages.filter(m => m.role === 'user');
             const hasRealContent = userMessages.length >= 2 && userMessages.map(m => m.text).join(' ').length > 15;
@@ -392,8 +393,8 @@ Missatge de l'usuari: ${text}`
             }
             onClose();
           }}
-          className="w-7 h-7 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors text-white">
-          <X size={15} />
+          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 active:bg-white/30 transition-colors text-white">
+          <X size={17} />
         </button>
       </div>
 
@@ -435,26 +436,24 @@ Missatge de l'usuari: ${text}`
               </div>
             )}
 
-            <div className="flex items-center gap-1.5 px-3 py-2.5">
-              {/* Botó micròfon — ocult si el navegador no el suporta */}
-              {/* Micro + Altaveu junts */}
+            <div className="flex items-center gap-2 px-3 py-2.5">
+              {/* Micro + Altaveu */}
               {hasSpeechSupport && (
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={loading}
                   title={isRecording ? 'Atura gravació' : 'Gravar veu'}
                   className={[
-                    'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0',
+                    'w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 active:scale-90',
                     isRecording ? 'bg-red-500 animate-pulse' : 'border hover:bg-accent-500/10',
                   ].join(' ')}
                   style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
                   {isRecording
-                    ? <MicOff size={15} className="text-white" />
-                    : <Mic size={15} />}
+                    ? <MicOff size={16} className="text-white" />
+                    : <Mic size={16} />}
                 </button>
               )}
 
-              {/* Toggle resposta de veu — al costat del micro */}
               <button
                 onClick={() => {
                   const next = !voiceEnabled;
@@ -463,28 +462,28 @@ Missatge de l'usuari: ${text}`
                 }}
                 title={voiceEnabled ? 'Desactivar veu del bot' : 'Activar veu del bot'}
                 className={[
-                  'w-9 h-9 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border',
+                  'w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border active:scale-90',
                   voiceEnabled ? 'bg-accent-500/20 border-accent-500' : '',
                   isSpeaking ? 'animate-pulse' : '',
                 ].join(' ')}
                 style={!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
-                <Volume2 size={15} className={voiceEnabled ? 'text-accent-500' : ''} />
+                <Volume2 size={16} className={voiceEnabled ? 'text-accent-500' : ''} />
               </button>
 
               <input ref={inputRef} type="text" value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu un missatge...'}
-                className="flex-1 h-9 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                className="flex-1 h-10 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
                 style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
                 disabled={loading} />
 
-              {/* Enviar */}
+              {/* Botó enviar — més gran per a mòbil */}
               <button onClick={handleSend} disabled={!input.trim() || loading}
-                className="w-9 h-9 rounded-xl bg-accent-500 hover:bg-accent-600 disabled:opacity-40 flex items-center justify-center transition-colors flex-shrink-0">
+                className="w-10 h-10 rounded-xl bg-accent-500 hover:bg-accent-600 active:scale-90 disabled:opacity-40 flex items-center justify-center transition-all flex-shrink-0">
                 {loading
-                  ? <Loader2 size={15} className="text-white animate-spin" />
-                  : <Send size={15} className="text-white" />}
+                  ? <Loader2 size={16} className="text-white animate-spin" />
+                  : <Send size={16} className="text-white" />}
               </button>
             </div>
           </div>

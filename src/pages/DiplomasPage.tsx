@@ -42,14 +42,25 @@ export function DiplomasPage() {
       return;
     }
     setDownloading(d.id);
+    // Obrim la finestra ABANS de l'operació async per evitar el bloqueig
+    // de popups de Safari iOS (que bloqueja window.open() cridat des d'async)
+    const newTab = window.open('', '_blank');
     try {
-      // La signed URL inicial pot haver expirat, sempre renovem.
       const url = await cloudDiplomaService.getSignedPdfUrl(d.verification_code);
       if (!url) {
+        newTab?.close();
         showToast('No hem pogut generar l\'enllaç', 'error');
         return;
       }
-      window.open(url, '_blank', 'noopener,noreferrer');
+      if (newTab) {
+        newTab.location.href = url;
+      } else {
+        // Fallback si el navegador ha bloquejat la finestra
+        window.location.href = url;
+      }
+    } catch {
+      newTab?.close();
+      showToast('Error al carregar el diploma', 'error');
     } finally {
       setDownloading(null);
     }

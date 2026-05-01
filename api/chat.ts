@@ -40,18 +40,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       };
     }
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: finalSystemInstruction,
-          contents,
-          generationConfig: { temperature: 0.85, maxOutputTokens: 500 }
-        })
-      }
-    );
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 28000);
+
+    let response: Response;
+    try {
+      response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: finalSystemInstruction,
+            contents,
+            generationConfig: { temperature: 0.85, maxOutputTokens: 1000 }
+          }),
+          signal: controller.signal,
+        }
+      );
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await response.json();
 

@@ -83,31 +83,44 @@ export async function sendMessage(history: ChatMessage[], userText: string): Pro
 
   console.log(`📤 Enviant via proxy: ${contents.length} missatges`);
 
-  // Cridem el nostre proxy a /api/chat (la clau és al servidor)
-  const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      system_instruction: { parts: [{ text: systemPrompt }] },
-      contents
-    })
+  const body = JSON.stringify({
+    system_instruction: { parts: [{ text: systemPrompt }] },
+    contents
   });
 
-  const data = await res.json() as { text?: string; error?: string };
-
-  if (!res.ok || data.error) {
-    throw new Error(data.error ?? `Error ${res.status}`);
+  let lastError: Error = new Error('Error desconegut');
+  for (let attempt = 0; attempt <= 1; attempt++) {
+    if (attempt > 0) await new Promise(r => setTimeout(r, 1500));
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      let res: Response;
+      try {
+        res = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body,
+          signal: controller.signal,
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+      const data = await res.json() as { text?: string; error?: string };
+      if (!res.ok || data.error) throw new Error(data.error ?? `Error ${res.status}`);
+      if (!data.text) throw new Error('Resposta buida');
+      const cleaned = data.text
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/#{1,6}\s/g, '')
+        .replace(/`([^`]+)`/g, '$1');
+      console.log('✅ Resposta rebuda');
+      return cleaned;
+    } catch (err) {
+      lastError = err as Error;
+      if (attempt === 0) console.warn('Reintentant assistent...', err);
+    }
   }
-
-  if (!data.text) throw new Error('Resposta buida');
-  // Netejem Markdown que Gemini posa malgrat les instruccions
-  const cleaned = data.text
-    .replace(/\*\*([^*]+)\*\*/g, '$1')  // **negreta** → text
-    .replace(/\*([^*]+)\*/g, '$1')       // *cursiva* → text
-    .replace(/#{1,6}\s/g, '')            // # títols → res
-    .replace(/`([^`]+)`/g, '$1');        // `codi` → text
-  console.log('✅ Resposta rebuda');
-  return cleaned;
+  throw lastError;
 }
 
 // ── Guardar conversa al Sheets ────────────────────────────────────────────────
