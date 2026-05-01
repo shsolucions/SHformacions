@@ -10,6 +10,18 @@ const PNG_CATS = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
 import { formatCurrency } from '../utils/formatters';
 
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const a = [...arr];
+  let s = (seed + 1) * 2654435761;
+  for (let i = a.length - 1; i > 0; i--) {
+    s = (((s >>> 16) ^ s) * 0x45d9f3b) >>> 0;
+    s = ((s >>> 16) ^ s) >>> 0;
+    const j = s % (i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 const CATEGORY_GROUPS: CourseCategory[] = [
   'excel', 'word', 'powerpoint', 'access', 'outlook',
   'cloud', 'ia', 'actic', 'consulting',
@@ -38,28 +50,10 @@ export function HomePage() {
         if (cancelled) return;
         const active = all.filter((c) => c.status === 'active');
 
-        // Selecció fixa dels destacats:
-        //   1. Excel intermedi
-        //   2. Excel avançat
-        //   3. ACTIC bàsic (Nivell 1)
-        //   4. ACTIC intermedi (Nivell 2)
-        //   5-6. Els 2 cursos d'IA més cars
-        const findOne = (cat: string, lvl: string) =>
-          active.find((c) => c.category === cat && c.level === lvl);
-
-        const excelInt  = findOne('excel', 'intermediate');
-        const excelAdv  = findOne('excel', 'advanced');
-        const acticBas  = findOne('actic', 'basic');
-        const acticInt  = findOne('actic', 'intermediate');
-
-        const aiCourses = active
-          .filter((c) => c.category === 'ai' || c.category === 'ia')
-          .sort((a, b) => b.price - a.price)
-          .slice(0, 2);
-
-        const fixedFeatured = [
-          excelInt, excelAdv, acticBas, acticInt, ...aiCourses,
-        ].filter((c): c is Course => Boolean(c));
+        // Rotació cada 2 setmanes basada en un shuffle determinista
+        const BIWEEK = Math.floor(Date.now() / (1000 * 60 * 60 * 24 * 14));
+        const shuffled = seededShuffle(active, BIWEEK);
+        const fixedFeatured = shuffled.slice(0, 6);
 
         setFeatured(fixedFeatured);
 

@@ -25,17 +25,23 @@ export function AppUpdateIcon() {
   const [updating, setUpdating] = useState(false);
 
   const handleClick = async () => {
+    if (updating) return;
+    setUpdating(true);
     if (needRefresh) {
-      // Hi ha versió nova → actualitzar
-      setUpdating(true);
+      // Fallback: força recàrrega si el SW no ho fa en 2s
+      const fallback = setTimeout(() => window.location.reload(), 2000);
       try {
         await updateServiceWorker(true);
+        clearTimeout(fallback);
+        window.location.reload();
       } catch {
-        setUpdating(false);
-        setNeedRefresh(false);
+        clearTimeout(fallback);
+        window.location.reload();
       }
+    } else {
+      // No hi ha versió nova → recàrrega manual per refrescar dades
+      window.location.reload();
     }
-    // Si no hi ha versió nova, no fem res (el badge ja és discret)
   };
 
   return (

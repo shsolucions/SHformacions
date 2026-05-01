@@ -111,13 +111,6 @@ export function LoginPage() {
             </Link>
           </p>
 
-          {/* Credencials de demo */}
-          <div className="text-center">
-            <p className="text-xs rounded-xl px-4 py-2 inline-block border" style={{ color: "var(--text-muted)", backgroundColor: "var(--bg-elevated)", borderColor: "var(--border-base)" }}>
-              👤 Demo: <span className="text-gray-500 font-mono">admin</span> / PIN{' '}
-              <span className="text-gray-500 font-mono">1234</span>
-            </p>
-          </div>
         </div>
       </div>
     </div>

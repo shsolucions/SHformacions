@@ -226,8 +226,10 @@ function PaymentCard({ payment, t, isAdmin, onMarkPaid, onEdit, onDelete }: Paym
 
   const methodLabels: Record<string, string> = {
     cash: t('payments.method_cash'),
+    card: t('payments.method_card'),
     transfer: t('payments.method_transfer'),
     bizum: t('payments.method_bizum'),
+    paypal: t('payments.method_paypal'),
   };
 
   return (
@@ -336,7 +338,7 @@ function PaymentFormModal({ open, onClose, onSaved, payment, users, courses, t }
   const statusOptions = ['pending', 'paid', 'cancelled'].map((s) => ({
     value: s, label: t(`payments.status_${s}`),
   }));
-  const methodOptions = ['cash', 'transfer', 'bizum'].map((m) => ({
+  const methodOptions = ['cash', 'card', 'transfer', 'bizum', 'paypal'].map((m) => ({
     value: m, label: t(`payments.method_${m}`),
   }));
 

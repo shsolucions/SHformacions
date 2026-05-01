@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { Search, Clock, Users, ChevronRight, Plus, ShoppingCart, Check } from 'lucide-react';
+import { Search, Clock, Users, ChevronDown, Plus, ShoppingCart, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -12,11 +12,10 @@ import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
 import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { CourseFormModal } from '../components/courses/CourseFormModal';
-import { CourseIcon, categoryGradients, pngBgColors } from '../components/ui/CourseIcon';
+import { CourseIcon, categoryGradients } from '../components/ui/CourseIcon';
 import { useSheetPrices } from '../hooks/useSheetPrices';
-const PNG_CATEGORIES = ['excel','word','powerpoint','access','outlook','actic'];
 import type { Course, CourseCategory } from '../types';
-import { formatCurrency, getStatusColor } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 const CATEGORIES: { key: string; label: string }[] = [
   { key: 'all',        label: 'cat.all' },
@@ -31,6 +30,18 @@ const CATEGORIES: { key: string; label: string }[] = [
   { key: 'consulting', label: 'cat.consulting' },
 ];
 
+const LEVEL_COLORS: Record<string, string> = {
+  basic:        'text-green-500 bg-green-500/10 border-green-500/20',
+  intermediate: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
+  advanced:     'text-red-500 bg-red-500/10 border-red-500/20',
+};
+
+const FORMAT_COLORS: Record<string, string> = {
+  online:     'text-blue-400 bg-blue-500/10 border-blue-500/20',
+  presential: 'text-purple-400 bg-purple-500/10 border-purple-500/20',
+  hybrid:     'text-orange-400 bg-orange-500/10 border-orange-500/20',
+};
+
 export function CoursesPage() {
   const { isAdmin } = useAuth();
   const { inCart, toggleCart } = useCart();
@@ -43,6 +54,7 @@ export function CoursesPage() {
   const [search, setSearch] = useState('');
   const [catFilter, setCatFilter] = useState(searchParams.get('cat') ?? 'all');
   const [showAdd, setShowAdd] = useState(false);
+  const [expandedCat, setExpandedCat] = useState<string | null>(null);
 
   const load = async () => {
     const all = await courseService.getAll();
@@ -65,7 +77,6 @@ export function CoursesPage() {
       return matchCat && matchSearch;
     }), [courses, search, catFilter]);
 
-  // Agrupem per categoria quan es veu "tots"
   const grouped = useMemo(() => {
     if (catFilter !== 'all' || search) return null;
     const map: Record<string, Course[]> = {};
@@ -78,6 +89,7 @@ export function CoursesPage() {
 
   const handleCatFilter = (key: string) => {
     setCatFilter(key);
+    setExpandedCat(null);
     setSearchParams(key === 'all' ? {} : { cat: key });
   };
 
@@ -92,6 +104,10 @@ export function CoursesPage() {
         : `"${course.name}" afegit al cistell ✓`,
       wasIn ? 'info' : 'success'
     );
+  };
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCat(prev => prev === cat ? null : cat);
   };
 
   if (loading) return <LoadingSpinner />;
@@ -142,20 +158,34 @@ export function CoursesPage() {
 
       {/* Llista de cursos */}
       {grouped ? (
-        <div className="flex flex-col gap-6">
+        /* Vista accordió per categories */
+        <div className="flex flex-col gap-2">
           {Object.entries(grouped).map(([cat, items]) => (
-            <CategorySection
-              key={cat} category={cat as CourseCategory} courses={items}
-              t={t} inCart={inCart} onCartToggle={handleCartToggle}
+            <AccordionSection
+              key={cat}
+              category={cat as CourseCategory}
+              courses={items}
+              isExpanded={expandedCat === cat}
+              onToggle={() => toggleCategory(cat)}
+              t={t}
+              inCart={inCart}
+              onCartToggle={handleCartToggle}
             />
           ))}
         </div>
       ) : filtered.length === 0 ? (
         <EmptyState icon={<Search size={28} />} title={t('courses.no_results')} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        /* Vista filtrada: targetes detallades */
+        <div className="flex flex-col gap-2.5">
           {filtered.map((c) => (
-            <CourseCard key={c.id} course={c} t={t} inCart={inCart(c.id!)} onCartToggle={handleCartToggle} />
+            <DetailedCourseCard
+              key={c.id}
+              course={c}
+              t={t}
+              inCart={inCart(c.id!)}
+              onCartToggle={handleCartToggle}
+            />
           ))}
         </div>
       )}
@@ -168,91 +198,156 @@ export function CoursesPage() {
   );
 }
 
-function CategorySection({ category, courses, t, inCart, onCartToggle }: {
-  category: CourseCategory; courses: Course[];
+// ─── Accordion Section ────────────────────────────────────────────────────────
+
+function AccordionSection({ category, courses, isExpanded, onToggle, t, inCart, onCartToggle }: {
+  category: CourseCategory;
+  courses: Course[];
+  isExpanded: boolean;
+  onToggle: () => void;
   t: (k: string) => string;
   inCart: (id: number) => boolean;
   onCartToggle: (c: Course, e: React.MouseEvent) => void;
 }) {
   return (
-    <div>
-      <div className="flex items-center gap-2.5 mb-3">
-        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'}`}>
-          <CourseIcon category={category} size={20} />
+    <div
+      className="rounded-2xl border overflow-hidden transition-all duration-200"
+      style={{
+        backgroundColor: 'var(--bg-card)',
+        borderColor: isExpanded ? 'rgba(14,165,233,0.35)' : 'var(--border-base)',
+      }}
+    >
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 p-4 text-left transition-colors"
+      >
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[category] ?? 'from-gray-700 to-gray-900'}`}>
+          <CourseIcon category={category} size={22} />
         </div>
-        <div>
-          <h2 className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{t(`cat.${category}`)}</h2>
-          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{courses.length} {courses.length === 1 ? 'curs' : 'cursos'}</p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>
+            {t(`cat.${category}`)}
+          </p>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {courses.length} {courses.length === 1 ? 'curs disponible' : 'cursos disponibles'}
+          </p>
         </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-        {courses.map((c) => (
-          <CourseCard key={c.id} course={c} t={t} inCart={inCart(c.id!)} onCartToggle={onCartToggle} />
-        ))}
-      </div>
+        <ChevronDown
+          size={18}
+          className="flex-shrink-0 transition-transform duration-300"
+          style={{
+            color: isExpanded ? 'rgb(56,189,248)' : 'var(--text-faint)',
+            transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
+          }}
+        />
+      </button>
+
+      {isExpanded && (
+        <div
+          className="flex flex-col gap-2 px-3 pb-3 border-t"
+          style={{ borderColor: 'var(--border-base)' }}
+        >
+          {courses.map((c) => (
+            <DetailedCourseCard
+              key={c.id}
+              course={c}
+              t={t}
+              inCart={inCart(c.id!)}
+              onCartToggle={onCartToggle}
+              nested
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
-function CourseCard({ course, t, inCart, onCartToggle }: {
-  course: Course; t: (k: string) => string;
+// ─── Detailed Course Card ─────────────────────────────────────────────────────
+
+function DetailedCourseCard({
+  course, t, inCart, onCartToggle, nested = false,
+}: {
+  course: Course;
+  t: (k: string) => string;
   inCart: boolean;
   onCartToggle: (c: Course, e: React.MouseEvent) => void;
+  nested?: boolean;
 }) {
   const { getPrice } = useSheetPrices();
   const displayPrice = getPrice(course.name, course.price);
   const seatsLeft = course.maxStudents - course.currentStudents;
   const isFull = seatsLeft <= 0 || course.status === 'full';
 
-  const levelColors: Record<string, string> = {
-    basic:        'text-green-500 bg-green-500/10 border-green-500/20',
-    intermediate: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
-    advanced:     'text-red-500 bg-red-500/10 border-red-500/20',
-  };
-
   return (
-    <div className="rounded-2xl border overflow-hidden transition-all hover:border-accent-500/30"
-      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
-      <Link to={`/cursos/${course.id}`} className="block p-3.5">
+    <div
+      className={`rounded-xl border overflow-hidden transition-all hover:border-accent-500/30 ${nested ? 'mt-1.5' : ''}`}
+      style={{
+        backgroundColor: nested ? 'var(--bg-elevated, #1a1a1a)' : 'var(--bg-card)',
+        borderColor: 'var(--border-base)',
+      }}
+    >
+      <Link to={`/cursos/${course.id}`} className="block p-4">
+        {/* Capçalera: icona + nom + badges */}
         <div className="flex items-start gap-3">
-          {/* Logo */}
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}>
-            <CourseIcon category={course.category} size={26} />
-          </div>
+          {!nested && (
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br ${categoryGradients[course.category] ?? 'from-gray-700 to-gray-900'}`}>
+              <CourseIcon category={course.category} size={22} />
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold leading-snug" style={{ color: 'var(--text-primary)' }}>
               {course.name}
             </p>
             <div className="flex flex-wrap gap-1.5 mt-1.5">
-              <Badge className={`${levelColors[course.level]} text-[10px] px-2 py-0`}>
+              <Badge className={`${LEVEL_COLORS[course.level] ?? ''} text-[10px] px-2 py-0`}>
                 {t(`courses.level_${course.level}`)}
+              </Badge>
+              <Badge className={`${FORMAT_COLORS[course.format] ?? ''} text-[10px] px-2 py-0`}>
+                {t(`courses.format_${course.format}`)}
               </Badge>
             </div>
           </div>
-          <ChevronRight size={15} style={{ color: 'var(--text-faint)' }} className="flex-shrink-0 mt-0.5" />
         </div>
-        <p className="text-xs mt-2 line-clamp-2 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-          {course.description}
-        </p>
-      </Link>
 
-      {/* Peu de la targeta: preu + botó cistell */}
-      <div className="flex items-center justify-between px-3.5 py-2.5 border-t"
-        style={{ borderColor: 'var(--border-base)' }}>
-        <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            <Clock size={11} className="inline mr-0.5" />{course.duration}h
-          </span>
-          <span className="text-sm font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
+        {/* Descripció */}
+        {course.description && (
+          <p className="text-xs mt-2.5 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+            {course.description}
+          </p>
+        )}
+
+        {/* Stats: durada + places + preu */}
+        <div className="flex items-center gap-4 mt-3 pt-2.5 border-t" style={{ borderColor: 'var(--border-base)' }}>
+          <div className="flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+            <Clock size={12} />
+            <span className="text-xs">{course.duration}h</span>
+          </div>
+          <div
+            className="flex items-center gap-1"
+            style={{ color: isFull ? '#f87171' : seatsLeft <= 3 ? '#eab308' : 'var(--text-muted)' }}
+          >
+            <Users size={12} />
+            <span className="text-xs">
+              {isFull ? 'Complet' : `${seatsLeft} lliures`}
+            </span>
+          </div>
+          <span className="ml-auto text-sm font-black tabular-nums" style={{ color: 'var(--text-primary)' }}>
             {displayPrice === 0 ? 'Gratuït' : formatCurrency(displayPrice)}
           </span>
         </div>
-        {/* Botó cistell — directament a la targeta, sense anar al detall */}
+      </Link>
+
+      {/* Peu: botó cistell */}
+      <div
+        className="flex items-center justify-end px-4 py-2.5 border-t"
+        style={{ borderColor: 'var(--border-base)' }}
+      >
         <button
           onClick={(e) => onCartToggle(course, e)}
           disabled={isFull}
           className={[
-            'flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-semibold transition-all active:scale-95',
+            'flex items-center gap-1.5 px-4 h-8 rounded-xl text-xs font-semibold transition-all active:scale-95',
             inCart
               ? 'bg-green-500 text-white'
               : 'bg-accent-500 hover:bg-accent-600 text-white',
@@ -263,7 +358,8 @@ function CourseCard({ course, t, inCart, onCartToggle }: {
             ? 'Complet'
             : inCart
             ? <><Check size={13} /> Afegit</>
-            : <><ShoppingCart size={13} /> Afegir</>}
+            : <><ShoppingCart size={13} /> Afegir al cistell</>
+          }
         </button>
       </div>
     </div>
