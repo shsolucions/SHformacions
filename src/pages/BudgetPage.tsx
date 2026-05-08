@@ -43,69 +43,112 @@ function PayPalDirect({ amount, description, onSuccess, onError }: {
   onError: () => void;
 }) {
   const [open, setOpen] = React.useState(false);
+  const [overlayActive, setOverlayActive] = React.useState(false);
+  const [ppKey, setPpKey] = React.useState(0);
+
   if (!PAYPAL_CLIENT_ID || amount <= 0) return null;
 
   const amountStr = amount.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' });
 
+  const handleCancel = () => {
+    setOverlayActive(false);
+    setPpKey(k => k + 1); // desmunta l'iframe de PayPal per tancar l'overlay
+    setOpen(false);
+  };
+
   return (
-    <div className="rounded-2xl border overflow-hidden transition-all"
-      style={{ borderColor: open ? '#009CDE50' : 'var(--border-base)', backgroundColor: 'var(--bg-card)' }}>
+    <>
+      <div className="rounded-2xl border overflow-hidden transition-all"
+        style={{ borderColor: open ? '#009CDE50' : 'var(--border-base)', backgroundColor: 'var(--bg-card)' }}>
 
-      {/* Botó compacte (sempre visible) */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2.5 px-4 py-3 transition-colors hover:bg-[#009CDE]/5 active:bg-[#009CDE]/10"
-      >
-        <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
-          style={{ backgroundColor: '#009CDE15', border: '1px solid #009CDE30' }}>
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="#009CDE">
-            <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
-          </svg>
-        </div>
-        <span className="text-sm font-semibold flex-1 text-left" style={{ color: '#009CDE' }}>
-          Pagar amb PayPal
-        </span>
-        <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: '#009CDE' }}>
-          {amountStr}
-        </span>
-      </button>
+        {/* Botó compacte (sempre visible) */}
+        <button
+          onClick={() => setOpen(o => !o)}
+          className="w-full flex items-center gap-2.5 px-4 py-3 transition-colors hover:bg-[#009CDE]/5 active:bg-[#009CDE]/10"
+        >
+          <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: '#009CDE15', border: '1px solid #009CDE30' }}>
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="#009CDE">
+              <path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944.901C5.026.382 5.474 0 5.998 0h7.46c2.57 0 4.578.543 5.69 1.81 1.01 1.15 1.304 2.42 1.012 4.287-.023.143-.047.288-.077.437-.983 5.05-4.349 6.797-8.647 6.797h-2.19c-.524 0-.968.382-1.05.9l-1.12 7.106zm14.146-14.42a3.35 3.35 0 0 0-.607-.541c-.013.076-.026.175-.041.254-.93 4.778-4.005 7.201-9.138 7.201h-2.19a.563.563 0 0 0-.556.479l-1.187 7.527h-.506l-.24 1.516a.56.56 0 0 0 .554.647h3.882c.46 0 .85-.334.922-.788.06-.26.76-4.852.816-5.09a.932.932 0 0 1 .923-.788h.58c3.76 0 6.705-1.528 7.565-5.946.36-1.847.174-3.388-.777-4.471z"/>
+            </svg>
+          </div>
+          <span className="text-sm font-semibold flex-1 text-left" style={{ color: '#009CDE' }}>
+            Pagar amb PayPal
+          </span>
+          <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: '#009CDE' }}>
+            {amountStr}
+          </span>
+        </button>
 
-      {/* Panel expandible amb els botons PayPal */}
-      {open && (
-        <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: '#009CDE25' }}>
-          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Tria com vols pagar</p>
-          <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'EUR' }}>
-            <PayPalButtons
-              style={{ layout: 'horizontal', color: 'blue', shape: 'rect', label: 'paypal', height: 40, tagline: false }}
-              createOrder={(_data, actions) => {
-                return actions.order.create({
-                  intent: 'CAPTURE',
-                  purchase_units: [{
-                    description: description.slice(0, 127),
-                    amount: { currency_code: 'EUR', value: amount.toFixed(2) },
-                  }],
-                });
-              }}
-              onApprove={async (_data, actions) => {
-                if (!actions.order) return;
-                await actions.order.capture();
-                setOpen(false);
-                onSuccess();
-              }}
-              onCancel={() => setOpen(false)}
-              onError={onError}
-            />
-          </PayPalScriptProvider>
+        {/* Panel expandible amb els botons PayPal */}
+        {open && (
+          <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: '#009CDE25' }}>
+            <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Tria com vols pagar</p>
+            <PayPalScriptProvider key={ppKey} options={{ clientId: PAYPAL_CLIENT_ID, currency: 'EUR' }}>
+              <PayPalButtons
+                style={{ layout: 'horizontal', color: 'blue', shape: 'rect', label: 'paypal', height: 40, tagline: false }}
+                onClick={(_data, actions) => {
+                  setOverlayActive(true);
+                  return actions.resolve();
+                }}
+                createOrder={(_data, actions) => {
+                  return actions.order.create({
+                    intent: 'CAPTURE',
+                    purchase_units: [{
+                      description: description.slice(0, 127),
+                      amount: { currency_code: 'EUR', value: amount.toFixed(2) },
+                    }],
+                  });
+                }}
+                onApprove={async (_data, actions) => {
+                  if (!actions.order) return;
+                  await actions.order.capture();
+                  setOverlayActive(false);
+                  setOpen(false);
+                  onSuccess();
+                }}
+                onCancel={() => { setOverlayActive(false); setOpen(false); }}
+                onError={(err) => { setOverlayActive(false); onError(err); }}
+              />
+            </PayPalScriptProvider>
+          </div>
+        )}
+      </div>
+
+      {/* Botó Cancel·lar fix per sobre l'overlay de PayPal (z-index màxim) */}
+      {overlayActive && (
+        <div style={{
+          position: 'fixed',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          zIndex: 2147483647,
+          padding: '12px 16px calc(12px + env(safe-area-inset-bottom))',
+          background: 'linear-gradient(to top, rgba(0,0,0,0.75) 60%, transparent 100%)',
+          pointerEvents: 'none',
+        }}>
           <button
-            onClick={() => setOpen(false)}
-            className="mt-3 w-full py-2.5 rounded-xl border text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400 active:scale-95"
-            style={{ borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}
+            onClick={handleCancel}
+            style={{
+              pointerEvents: 'all',
+              width: '100%',
+              padding: '15px',
+              borderRadius: '16px',
+              background: 'rgba(20,20,20,0.97)',
+              border: '1px solid rgba(255,255,255,0.18)',
+              color: '#ffffff',
+              fontSize: '16px',
+              fontWeight: '600',
+              letterSpacing: '0.01em',
+              cursor: 'pointer',
+              WebkitTapHighlightColor: 'transparent',
+            }}
           >
             Cancel·lar
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
