@@ -73,16 +73,7 @@ function PayPalDirect({ amount, description, onSuccess, onError }: {
       {/* Panel expandible amb els botons PayPal */}
       {open && (
         <div className="border-t px-4 pb-4 pt-3" style={{ borderColor: '#009CDE25' }}>
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>Tria com vols pagar</span>
-            <button
-              onClick={() => setOpen(false)}
-              className="text-xs px-2.5 py-1 rounded-lg border transition-colors hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/30"
-              style={{ borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}
-            >
-              Cancel·lar
-            </button>
-          </div>
+          <p className="text-xs mb-3" style={{ color: 'var(--text-muted)' }}>Tria com vols pagar</p>
           <PayPalScriptProvider options={{ clientId: PAYPAL_CLIENT_ID, currency: 'EUR' }}>
             <PayPalButtons
               style={{ layout: 'horizontal', color: 'blue', shape: 'rect', label: 'paypal', height: 40, tagline: false }}
@@ -101,9 +92,17 @@ function PayPalDirect({ amount, description, onSuccess, onError }: {
                 setOpen(false);
                 onSuccess();
               }}
+              onCancel={() => setOpen(false)}
               onError={onError}
             />
           </PayPalScriptProvider>
+          <button
+            onClick={() => setOpen(false)}
+            className="mt-3 w-full py-2.5 rounded-xl border text-sm font-medium transition-colors hover:bg-red-500/10 hover:text-red-400 active:scale-95"
+            style={{ borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}
+          >
+            Cancel·lar
+          </button>
         </div>
       )}
     </div>
