@@ -108,7 +108,7 @@ function PayPalDirect({ amount, description, onSuccess, onError }: {
                   onSuccess();
                 }}
                 onCancel={() => { setOverlayActive(false); setOpen(false); }}
-                onError={(err) => { setOverlayActive(false); onError(err); }}
+                onError={() => { setOverlayActive(false); onError(); }}
               />
             </PayPalScriptProvider>
           </div>
