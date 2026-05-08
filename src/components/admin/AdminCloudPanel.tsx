@@ -15,14 +15,6 @@ import { formatRelative } from '../../utils/dateUtils';
 
 type CloudBudgetStatus = 'draft' | 'sent' | 'accepted' | 'rejected';
 
-/**
- * Panel del dashboard admin que mostra dades del núvol (Supabase).
- * Crida l'Edge Function `admin-stats` via `adminCloudService`.
- *
- * Ús: afegir-lo al DashboardPage.tsx just a dins del tab 'overview'
- * o com a secció separada, condicionat a { isAdmin }.
- */
-
 function statusBadgeColor(status: CloudBudgetStatus): string {
   switch (status) {
     case 'draft':    return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
@@ -63,11 +55,6 @@ export function AdminCloudPanel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleRefresh = () => {
-    if (refreshing) return;
-    fetchStats(true);
-  };
-
   if (loading) return <LoadingSpinner />;
 
   if (error) {
@@ -76,8 +63,8 @@ export function AdminCloudPanel() {
         <div className="p-6 flex flex-col items-center text-center gap-3">
           <CloudOff className="text-red-400" size={32} />
           <div>
-            <p className="font-semibold text-white">{t('admin.cloud.error')}</p>
-            <p className="text-xs text-gray-500 mt-1 font-mono break-all">{error}</p>
+            <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{t('admin.cloud.error')}</p>
+            <p className="text-xs mt-1 font-mono break-all" style={{ color: 'var(--text-muted)' }}>{error}</p>
           </div>
           <Button onClick={() => fetchStats()} size="sm">
             <RefreshCw size={14} className="mr-1.5" />
@@ -92,20 +79,20 @@ export function AdminCloudPanel() {
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Header amb acció refresh */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-accent-500/15 flex items-center justify-center">
             <Cloud size={18} className="text-accent-400" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-white font-display">
+            <h2 className="text-base font-bold font-display" style={{ color: 'var(--text-primary)' }}>
               {t('admin.cloud.title')}
             </h2>
-            <p className="text-xs text-gray-500">{t('admin.cloud.subtitle')}</p>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('admin.cloud.subtitle')}</p>
           </div>
         </div>
-        <Button onClick={handleRefresh} size="sm" variant="secondary" disabled={refreshing}>
+        <Button onClick={() => { if (!refreshing) fetchStats(true); }} size="sm" variant="secondary" disabled={refreshing}>
           <RefreshCw size={14} className={`mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
           {refreshing ? t('admin.cloud.refreshing') : t('admin.cloud.refresh')}
         </Button>
@@ -113,30 +100,10 @@ export function AdminCloudPanel() {
 
       {/* Comptadors */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <StatTile
-          icon={<Users size={18} />}
-          label={t('admin.cloud.total_users')}
-          value={stats.total_users}
-          tone="blue"
-        />
-        <StatTile
-          icon={<FileText size={18} />}
-          label={t('admin.cloud.total_budgets')}
-          value={stats.total_budgets}
-          tone="accent"
-        />
-        <StatTile
-          icon={<Award size={18} />}
-          label={t('admin.cloud.total_diplomas')}
-          value={stats.total_diplomas}
-          tone="yellow"
-        />
-        <StatTile
-          icon={<TrendingUp size={18} />}
-          label={t('nav.courses')}
-          value={stats.total_enrollments}
-          tone="green"
-        />
+        <StatTile icon={<Users size={18} />} label={t('admin.cloud.total_users')} value={stats.total_users} tone="blue" />
+        <StatTile icon={<FileText size={18} />} label={t('admin.cloud.total_budgets')} value={stats.total_budgets} tone="accent" />
+        <StatTile icon={<Award size={18} />} label={t('admin.cloud.total_diplomas')} value={stats.total_diplomas} tone="yellow" />
+        <StatTile icon={<TrendingUp size={18} />} label={t('nav.courses')} value={stats.total_enrollments} tone="green" />
       </div>
 
       {/* Últims pressuposts */}
@@ -144,14 +111,15 @@ export function AdminCloudPanel() {
         <CardHeader title={t('admin.cloud.recent_budgets')} />
         <div className="px-4 pb-4">
           {stats.recent_budgets.length === 0 ? (
-            <p className="text-sm text-gray-500 py-3">{t('admin.cloud.none')}</p>
+            <p className="text-sm py-3" style={{ color: 'var(--text-muted)' }}>{t('admin.cloud.none')}</p>
           ) : (
-            <ul className="divide-y divide-white/5">
+            <ul className="divide-y" style={{ '--tw-divide-opacity': 1 } as React.CSSProperties}>
               {stats.recent_budgets.map((b) => (
-                <li key={b.id} className="py-3 flex items-center justify-between gap-3">
+                <li key={b.id} className="py-3 flex items-center justify-between gap-3 border-t"
+                  style={{ borderColor: 'var(--border-base)' }}>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-white truncate">{b.title}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{b.title}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
                       {formatRelative(new Date(b.created_at).getTime())}
                     </p>
                   </div>
@@ -170,25 +138,26 @@ export function AdminCloudPanel() {
         </div>
       </Card>
 
-      {/* Últims usuaris + Últims diplomes (2 columnes) */}
+      {/* Últims usuaris + Últims diplomes */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>
           <CardHeader title={t('admin.cloud.recent_users')} />
           <div className="px-4 pb-4">
             {stats.recent_users.length === 0 ? (
-              <p className="text-sm text-gray-500 py-3">{t('admin.cloud.none')}</p>
+              <p className="text-sm py-3" style={{ color: 'var(--text-muted)' }}>{t('admin.cloud.none')}</p>
             ) : (
-              <ul className="divide-y divide-white/5">
-                {stats.recent_users.map((u) => (
-                  <li key={u.id} className="py-3 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-accent-500/20 text-accent-400 font-bold flex items-center justify-center text-sm">
+              <ul>
+                {stats.recent_users.map((u, i) => (
+                  <li key={u.id} className="py-3 flex items-center gap-3 border-t"
+                    style={{ borderColor: i === 0 ? 'transparent' : 'var(--border-base)' }}>
+                    <div className="w-9 h-9 rounded-full bg-accent-500/20 text-accent-400 font-bold flex items-center justify-center text-sm flex-shrink-0">
                       {u.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white truncate">{u.name}</p>
-                      <p className="text-xs text-gray-500">@{u.nickname}</p>
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{u.name}</p>
+                      <p className="text-xs" style={{ color: 'var(--text-muted)' }}>@{u.nickname}</p>
                     </div>
-                    <span className="text-xs text-gray-500 flex-shrink-0">
+                    <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-muted)' }}>
                       {formatRelative(new Date(u.created_at).getTime())}
                     </span>
                   </li>
@@ -202,15 +171,16 @@ export function AdminCloudPanel() {
           <CardHeader title={t('admin.cloud.recent_diplomas')} />
           <div className="px-4 pb-4">
             {stats.recent_diplomas.length === 0 ? (
-              <p className="text-sm text-gray-500 py-3">{t('admin.cloud.none')}</p>
+              <p className="text-sm py-3" style={{ color: 'var(--text-muted)' }}>{t('admin.cloud.none')}</p>
             ) : (
-              <ul className="divide-y divide-white/5">
-                {stats.recent_diplomas.map((d) => (
-                  <li key={d.id} className="py-3 flex items-center gap-3">
+              <ul>
+                {stats.recent_diplomas.map((d, i) => (
+                  <li key={d.id} className="py-3 flex items-center gap-3 border-t"
+                    style={{ borderColor: i === 0 ? 'transparent' : 'var(--border-base)' }}>
                     <Award size={18} className="text-yellow-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-white truncate">{d.course_name}</p>
-                      <p className="text-xs text-gray-500 truncate">
+                      <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>{d.course_name}</p>
+                      <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>
                         {d.student_name ?? '—'} · {formatRelative(new Date(d.issued_at).getTime())}
                       </p>
                     </div>
@@ -224,10 +194,6 @@ export function AdminCloudPanel() {
     </div>
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────
-// Subcomponent: targeta de comptador
-// ─────────────────────────────────────────────────────────────────────
 
 interface StatTileProps {
   icon: React.ReactNode;
@@ -245,18 +211,16 @@ const TONE_CLASSES: Record<StatTileProps['tone'], string> = {
 
 function StatTile({ icon, label, value, tone }: StatTileProps) {
   return (
-    <div
-      className="rounded-2xl p-4 border flex flex-col gap-2 transition-colors"
-      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}
-    >
+    <div className="rounded-2xl p-4 border flex flex-col gap-2"
+      style={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-base)' }}>
       <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${TONE_CLASSES[tone]}`}>
         {icon}
       </div>
       <div>
-        <p className="text-2xl font-bold text-white font-display leading-none tabular-nums">
+        <p className="text-2xl font-bold font-display leading-none tabular-nums" style={{ color: 'var(--text-primary)' }}>
           {value.toLocaleString()}
         </p>
-        <p className="text-xs text-gray-500 mt-1 truncate">{label}</p>
+        <p className="text-xs mt-1 truncate" style={{ color: 'var(--text-muted)' }}>{label}</p>
       </div>
     </div>
   );

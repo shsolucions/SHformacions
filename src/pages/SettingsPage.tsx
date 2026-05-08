@@ -90,7 +90,7 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-col gap-5">
-      <h1 className="text-2xl font-bold text-white font-display">{t('settings.title')}</h1>
+      <h1 className="text-2xl font-bold font-display" style={{ color: 'var(--text-primary)' }}>{t('settings.title')}</h1>
 
       {/* Language */}
       <Card>
@@ -102,16 +102,13 @@ export function SettingsPage() {
               onClick={() => setLanguage(lang.code)}
               className={[
                 'flex items-center gap-3 p-3 rounded-xl border transition-all text-left',
-                language === lang.code
-                  ? 'border-accent-500/50 bg-accent-500/10'
-                  : 'border-[#2a2a2a] hover:border-[#333] bg-[#1a1a1a]',
+                language === lang.code ? 'border-accent-500/50 bg-accent-500/10' : 'hover:border-accent-500/30',
               ].join(' ')}
+              style={language !== lang.code ? { borderColor: 'var(--border-base)', backgroundColor: 'var(--bg-elevated)' } : {}}
             >
               <span className="text-2xl">{lang.flag}</span>
-              <span className="flex-1 text-sm font-medium text-white">{lang.label}</span>
-              {language === lang.code && (
-                <Check size={16} className="text-accent-400" />
-              )}
+              <span className="flex-1 text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{lang.label}</span>
+              {language === lang.code && <Check size={16} className="text-accent-400" />}
             </button>
           ))}
         </div>
@@ -123,12 +120,10 @@ export function SettingsPage() {
         <div className="grid grid-cols-2 gap-3">
           <button
             onClick={() => setTheme('dark')}
-            className={[
-              'flex items-center justify-center gap-2 p-4 rounded-xl border transition-all',
-              theme === 'dark'
-                ? 'border-accent-500/50 bg-accent-500/10 text-accent-400'
-                : 'border-[#2a2a2a] text-gray-500 hover:border-[#333]',
-            ].join(' ')}
+            className="flex items-center justify-center gap-2 p-4 rounded-xl border transition-all"
+            style={theme === 'dark'
+              ? { borderColor: 'rgba(14,165,233,0.5)', backgroundColor: 'rgba(14,165,233,0.1)', color: 'rgb(56,189,248)' }
+              : { borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}
           >
             <Moon size={18} />
             <span className="text-sm font-medium">{t('settings.theme_dark')}</span>
@@ -136,12 +131,10 @@ export function SettingsPage() {
           </button>
           <button
             onClick={() => setTheme('light')}
-            className={[
-              'flex items-center justify-center gap-2 p-4 rounded-xl border transition-all',
-              theme === 'light'
-                ? 'border-accent-500/50 bg-accent-500/10 text-accent-400'
-                : 'border-[#2a2a2a] text-gray-500 hover:border-[#333]',
-            ].join(' ')}
+            className="flex items-center justify-center gap-2 p-4 rounded-xl border transition-all"
+            style={theme === 'light'
+              ? { borderColor: 'rgba(14,165,233,0.5)', backgroundColor: 'rgba(14,165,233,0.1)', color: 'rgb(56,189,248)' }
+              : { borderColor: 'var(--border-base)', color: 'var(--text-muted)' }}
           >
             <Sun size={18} />
             <span className="text-sm font-medium">{t('settings.theme_light')}</span>
@@ -154,48 +147,30 @@ export function SettingsPage() {
       <Card>
         <CardHeader title={t('settings.backup_section')} icon={<Download size={18} />} />
         <div className="flex flex-col gap-3">
-          <div className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl">
+          <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
             <div className="min-w-0 mr-3">
-              <p className="text-sm font-medium text-white">{t('settings.export')}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{t('settings.export_desc')}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('settings.export')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{t('settings.export_desc')}</p>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Download size={14} />}
-              onClick={handleExport}
-              loading={exporting}
-            >
+            <Button variant="secondary" size="sm" icon={<Download size={14} />} onClick={handleExport} loading={exporting}>
               {t('settings.export')}
             </Button>
           </div>
 
-          <div className="flex items-center justify-between p-3 bg-[#1a1a1a] rounded-xl">
+          <div className="flex items-center justify-between p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
             <div className="min-w-0 mr-3">
-              <p className="text-sm font-medium text-white">{t('settings.import')}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{t('settings.import_desc')}</p>
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('settings.import')}</p>
+              <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{t('settings.import_desc')}</p>
             </div>
-            <Button
-              variant="secondary"
-              size="sm"
-              icon={<Upload size={14} />}
-              onClick={() => fileRef.current?.click()}
-              loading={importing}
-            >
+            <Button variant="secondary" size="sm" icon={<Upload size={14} />} onClick={() => fileRef.current?.click()} loading={importing}>
               {t('settings.import')}
             </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".json"
-              onChange={handleFileChange}
-              className="hidden"
-            />
+            <input ref={fileRef} type="file" accept=".json" onChange={handleFileChange} className="hidden" />
           </div>
         </div>
       </Card>
 
-      {/* Avisos / Notificacions */}
+      {/* Notificacions */}
       {session && (
         <Card>
           <CardHeader
@@ -207,7 +182,8 @@ export function SettingsPage() {
                   {unreadCount > 0 && (
                     <button
                       onClick={() => markAllAsRead().then(() => showToast(t('notifications.all_read'), 'success'))}
-                      className="flex items-center gap-1 text-xs text-gray-400 hover:text-white px-2 py-1 rounded-lg hover:bg-white/5"
+                      className="flex items-center gap-1 text-xs px-2 py-1 rounded-lg transition-colors hover:bg-accent-500/10"
+                      style={{ color: 'var(--text-muted)' }}
                     >
                       <CheckCheck size={13} />
                       {t('notifications.mark_all_read')}
@@ -224,9 +200,9 @@ export function SettingsPage() {
             }
           />
           {notifications.length === 0 ? (
-            <div className="flex items-center gap-3 p-3 bg-[#1a1a1a] rounded-xl">
-              <Bell size={18} className="text-gray-600" />
-              <p className="text-sm text-gray-500">{t('notifications.no_notifications')}</p>
+            <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+              <Bell size={18} style={{ color: 'var(--text-faint)' }} />
+              <p className="text-sm" style={{ color: 'var(--text-muted)' }}>{t('notifications.no_notifications')}</p>
             </div>
           ) : (
             <div className="flex flex-col gap-2">
@@ -238,14 +214,14 @@ export function SettingsPage() {
         </Card>
       )}
 
-      {/* Cloud sync (coming soon) */}
+      {/* Cloud sync */}
       <Card>
         <CardHeader title={t('settings.cloud_sync')} icon={<CloudOff size={18} />} />
-        <div className="flex items-center gap-3 p-3 bg-[#1a1a1a] rounded-xl">
-          <CloudOff size={20} className="text-gray-600" />
+        <div className="flex items-center gap-3 p-3 rounded-xl" style={{ backgroundColor: 'var(--bg-elevated)' }}>
+          <CloudOff size={20} style={{ color: 'var(--text-faint)' }} />
           <div>
-            <p className="text-sm text-gray-400">{t('settings.cloud_sync')}</p>
-            <p className="text-xs text-gray-600 mt-0.5">{t('settings.coming_soon')}</p>
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('settings.cloud_sync')}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-faint)' }}>{t('settings.coming_soon')}</p>
           </div>
           <span className="ml-auto text-xs bg-accent-500/10 text-accent-400 border border-accent-500/20 px-2 py-0.5 rounded-full">
             {t('settings.coming_soon')}
@@ -269,20 +245,14 @@ export function SettingsPage() {
         <div className="flex items-center justify-between p-3 bg-red-500/5 border border-red-500/20 rounded-xl">
           <div className="min-w-0 mr-3">
             <p className="text-sm font-medium text-red-400">{t('settings.clear_data')}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('settings.clear_confirm')}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{t('settings.clear_confirm')}</p>
           </div>
-          <Button
-            variant="danger"
-            size="sm"
-            icon={<Trash2 size={14} />}
-            onClick={() => setShowClearConfirm(true)}
-          >
+          <Button variant="danger" size="sm" icon={<Trash2 size={14} />} onClick={() => setShowClearConfirm(true)}>
             {t('settings.clear_data')}
           </Button>
         </div>
       </Card>
 
-      {/* Confirm clear */}
       <ConfirmDialog
         open={showClearConfirm}
         onClose={() => setShowClearConfirm(false)}
@@ -292,7 +262,6 @@ export function SettingsPage() {
         loading={clearing}
       />
 
-      {/* Confirm import */}
       <ConfirmDialog
         open={showImportConfirm}
         onClose={() => { setShowImportConfirm(false); setPendingImport(null); }}
@@ -304,7 +273,6 @@ export function SettingsPage() {
         confirmLabel={t('settings.import')}
       />
 
-      {/* Panell sincronització Dexie ↔ Supabase (només admin) */}
       {isAdmin && <SyncAdminPanel />}
     </div>
   );
@@ -317,24 +285,11 @@ function AppVersionRow({ label }: { label: string }) {
   return <InfoRow label={label} value={version} />;
 }
 
-function BuildInfo() {
-  const d = new Date(__BUILD_TIME__);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const version = `sh${d.getFullYear()}.${pad(d.getMonth()+1)}.${pad(d.getDate())}.${pad(d.getHours())}${pad(d.getMinutes())}`;
-  const dateStr = `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} · ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-  return (
-    <>
-      <InfoRow label="Versió" value={version} />
-      <InfoRow label="Última actualització" value={dateStr} />
-    </>
-  );
-}
-
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm py-1">
-      <span className="text-gray-500">{label}</span>
-      <span className="text-white font-medium">{value}</span>
+      <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+      <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{value}</span>
     </div>
   );
 }
@@ -349,18 +304,20 @@ function NotificationRow({ notification: n, onRead }: { notification: Notificati
   return (
     <button
       onClick={onRead}
-      className={[
-        'w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all',
-        n.read ? 'bg-[#141414] border-[#222] opacity-60' : 'bg-[#1a1a1a] border-[#2a2a2a]',
-      ].join(' ')}
+      className="w-full text-left flex items-start gap-3 p-3 rounded-xl border transition-all"
+      style={{
+        backgroundColor: n.read ? 'var(--bg-card)' : 'var(--bg-elevated)',
+        borderColor: 'var(--border-base)',
+        opacity: n.read ? 0.6 : 1,
+      }}
     >
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           {!n.read && <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dotColor}`} />}
-          <p className="text-sm font-semibold text-white leading-snug truncate">{n.title}</p>
+          <p className="text-sm font-semibold leading-snug truncate" style={{ color: 'var(--text-primary)' }}>{n.title}</p>
         </div>
-        <p className="text-xs text-gray-400 mt-0.5 leading-snug">{n.message}</p>
-        <p className="text-xs text-gray-600 mt-1">{formatRelative(n.createdAt)}</p>
+        <p className="text-xs mt-0.5 leading-snug" style={{ color: 'var(--text-muted)' }}>{n.message}</p>
+        <p className="text-xs mt-1" style={{ color: 'var(--text-faint)' }}>{formatRelative(n.createdAt)}</p>
       </div>
     </button>
   );

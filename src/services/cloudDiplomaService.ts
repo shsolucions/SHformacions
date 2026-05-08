@@ -159,16 +159,34 @@ export const cloudDiplomaService = {
     return (await res.json()) as IssueDiplomaResult;
   },
 
-  /**
-   * Revoca (elimina) un diploma — NOMÉS ADMIN.
-   * Cal una segona Edge Function o cridar directament amb service_role;
-   * per simplicitat, el client NO pot revocar diplomes. Si l'admin necessita
-   * revocar, ho farà via Supabase Studio (eliminar fila → eliminar PDF).
-   */
-  async remove(_id: string): Promise<never> {
-    throw new Error(
-      'remove: no implementat al client. Usa Supabase Studio o crea una Edge Function dedicada.'
-    );
+  /** Llistat de TOTS els diplomes — NOMÉS ADMIN. Via Vercel API amb service_role. */
+  async adminListAll(): Promise<CloudDiploma[]> {
+    if (!ADMIN_SECRET) throw new Error('VITE_ADMIN_SHARED_SECRET no configurat');
+    const res = await fetch('/api/admin-diplomas', {
+      headers: { 'x-admin-secret': ADMIN_SECRET },
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error ?? `Error ${res.status}`);
+    }
+    return (await res.json()) as CloudDiploma[];
+  },
+
+  /** Elimina un diploma (registre DB + PDF storage) — NOMÉS ADMIN. */
+  async remove(id: string, userId: string, verificationCode?: string): Promise<void> {
+    if (!ADMIN_SECRET) throw new Error('VITE_ADMIN_SHARED_SECRET no configurat');
+    const res = await fetch('/api/admin-diplomas', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-secret': ADMIN_SECRET,
+      },
+      body: JSON.stringify({ id, user_id: userId, verification_code: verificationCode }),
+    });
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}));
+      throw new Error(d.error ?? `Error ${res.status}`);
+    }
   },
 };
 
