@@ -19,6 +19,55 @@ export class SHformacionsDatabase extends Dexie {
       notifications: '++id, userId, type, read, createdAt',
       settings:      '++id, &key',
     });
+
+    // v2: correcció de noms i preus per a que coincideixin exactament amb el Google Sheets
+    this.version(2).stores({
+      users:         '++id, nickname, role, active, createdAt',
+      courses:       '++id, category, status, startDate, endDate, createdAt',
+      requests:      '++id, userId, courseId, status, createdAt',
+      payments:      '++id, userId, courseId, status, method, createdAt',
+      notifications: '++id, userId, type, read, createdAt',
+      settings:      '++id, &key',
+    }).upgrade(tx => {
+      const fixes: Record<string, { name?: string; price?: number; duration?: number }> = {
+        // Reparació de noms que no coincidien amb el Sheets
+        'Outlook: Gestió Professional del Correu':           { name: 'Outlook Professional', price: 120, duration: 8 },
+        'IA Inicial: Introducció a la Intel·ligència Artificial': { name: 'IA Inicial: Fonaments i Eines Pràctiques', price: 175, duration: 10 },
+        'IA Avançat: IA per a Empreses i Professionals':     { name: 'IA Avançada i Automatitzacions', price: 320, duration: 12 },
+        'IA Avançat: Automatització i Agents':               { name: 'IA Avançada i Automatitzacions', price: 320, duration: 12 },
+        'IA per a Marketing i Comunicació':                  { name: 'IA per a Màrqueting i Vendes', price: 200, duration: 8 },
+        'IA per a Màrqueting Digital':                       { name: 'IA per a Màrqueting i Vendes', price: 200, duration: 8 },
+        'IA per a Direcció i Gestió Empresarial':            { name: 'IA per a Direcció i Gestió', price: 210, duration: 6 },
+        'Consultoria IT per a Empreses':                     { name: 'Consultoria IT Estratègica per a Empreses', price: 260, duration: 4 },
+        // Actualització de preus (noms ja coincidien)
+        'Excel Inicial':                           { price: 125, duration: 10 },
+        'Excel Intermedi':                         { price: 165, duration: 12 },
+        'Excel Avançat':                           { price: 210, duration: 12 },
+        'Word Inicial':                            { price: 115, duration: 8 },
+        'Word Avançat':                            { price: 160, duration: 10 },
+        'PowerPoint Inicial':                      { price: 95,  duration: 8 },
+        "PowerPoint Avançat: Presentacions d'Impacte": { price: 170, duration: 10 },
+        'Access Inicial':                          { price: 130, duration: 10 },
+        'Access Intermedi':                        { price: 175, duration: 14 },
+        'Access Avançat':                          { price: 220, duration: 16 },
+        'Microsoft 365 Inicial':                   { price: 130, duration: 10 },
+        'Microsoft 365 Avançat per a Empreses':    { price: 370, duration: 12 },
+        'IA Inicial: Fonaments i Eines Pràctiques':{ price: 175, duration: 10 },
+        'IA per a Recursos Humans':                { price: 200, duration: 8 },
+        'IA per a Finances i Comptabilitat':       { price: 200, duration: 8 },
+        'IA per a Vendes i Atenció al Client':     { price: 160, duration: 6 },
+        'IA per a Atenció al Client':              { price: 160, duration: 8 },
+        'ACTIC Nivell 1 — Certificat Bàsic':       { price: 222, duration: 30 },
+        'ACTIC Nivell 3 — Certificat Avançat':     { price: 175, duration: 30 },
+      };
+      return tx.table('courses').toCollection().modify((course: any) => {
+        const fix = fixes[course.name];
+        if (!fix) return;
+        if (fix.name)     course.name     = fix.name;
+        if (fix.price)    course.price    = fix.price;
+        if (fix.duration) course.duration = fix.duration;
+      });
+    });
   }
 }
 
@@ -583,6 +632,70 @@ Suport i seguiment post-implantació`,
   await db.settings.add({ key: 'app_language', value: 'ca' });
   await db.settings.add({ key: 'app_theme', value: 'dark' });
   await db.settings.add({ key: 'app_version', value: '1.0.0' });
+}
+
+// ══════════════════════════════════════════════════════════════
+// INFORMÀTICA + ASSESSORIA + SERVEIS TÈCNICS
+// ══════════════════════════════════════════════════════════════
+export async function seedNewServicesCourses(): Promise<void> {
+  const existing = await db.courses
+    .where('category').anyOf(['informatica', 'assessoria', 'serveis_tecnics'])
+    .count();
+  if (existing > 0) return;
+
+  const now = Date.now();
+
+  await db.courses.add({
+    name: 'Informàtica Essencial: Primers Passos', category: 'informatica' as any,
+    level: 'basic', format: 'hybrid', duration: 12, price: 120,
+    maxStudents: 12, currentStudents: 0, status: 'active',
+    instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
+    description: 'Aprèn els fonaments de la informàtica des de zero: Windows, internet, correu i eines digitals del dia a dia.',
+    objectives: `Conèixer el maquinari: ordinador, portàtil i perifèrics\nDominar Windows: escriptori, fitxers i aplicacions\nNavegar per internet de forma segura\nGestió del correu electrònic\nÚs bàsic de Microsoft Office\nSeguretat digital: contrasenyes i privacitat\nCòpies de seguretat i emmagatzematge al núvol\nResolució de problemes habituals`,
+    tags: 'informatica,windows,internet,basics', createdAt: now, updatedAt: now,
+  });
+
+  await db.courses.add({
+    name: 'Informàtica Intermèdia: Productivitat Diària', category: 'informatica' as any,
+    level: 'intermediate', format: 'presential', duration: 15, price: 200,
+    maxStudents: 12, currentStudents: 0, status: 'active',
+    instructor: 'Saïd Hammouda', location: 'Aula 1',
+    description: 'Augmenta la teva productivitat digital: Office integrat, treball en equip, núvol i eines de gestió professional.',
+    objectives: `Gestió avançada de fitxers i carpetes\nMicrosoft Office integrat: Word + Excel + Outlook\nVideoconferències i treball en equip (Teams/Zoom)\nDocuments al núvol (OneDrive, Google Drive)\nEines de productivitat: planificació i tasques\nSeguretat i privacitat avançada\nAutomatitzacions senzilles per estalviar temps\nResolució de problemes tècnics habituals`,
+    tags: 'informatica,productivitat,office,cloud', createdAt: now, updatedAt: now,
+  });
+
+  await db.courses.add({
+    name: 'Informàtica Avançada: Domini Professional', category: 'informatica' as any,
+    level: 'advanced', format: 'presential', duration: 20, price: 300,
+    maxStudents: 10, currentStudents: 0, status: 'active',
+    instructor: 'Saïd Hammouda', location: 'Aula 1',
+    description: 'Domina la informàtica al nivell professional: administració de sistemes, xarxes, seguretat i automatització.',
+    objectives: `Administració avançada de Windows 10/11\nXarxes locals: configuració i manteniment\nSeguretat informàtica: firewalls, VPN, antivirus\nVirtualització i màquines virtuals\nScripts PowerShell per automatitzar tasques\nAdministració Microsoft 365 per a empreses\nCòpies de seguretat i recuperació\nDiagnòstic i resolució de problemes complexos`,
+    tags: 'informatica,avançat,xarxes,sistemes', createdAt: now, updatedAt: now,
+  });
+
+  await db.courses.add({
+    name: "Assessorament Tecnològic Personalitzat: Venda d'equips informàtics",
+    category: 'assessoria' as any,
+    level: 'basic', format: 'presential', duration: 2, price: 0,
+    maxStudents: 1, currentStudents: 0, status: 'active',
+    instructor: 'Saïd Hammouda', location: 'Taller SH Solucions / Remot',
+    description: "Assessorament expert per triar els millors equips informàtics segons les teves necessitats i pressupost.",
+    objectives: `Anàlisi de necessitats i pressupost\nComparativa de models i proveïdors\nRecomanació d'equips (portàtils, sobretaula, perifèrics)\nConfiguració inicial del nou equip\nMigració de dades del vell al nou equip\nAssessorament post-compra\nServei de cerca i compra delegada\nSuport tècnic inclòs 30 dies`,
+    tags: 'assessoria,equips,compra,consell', createdAt: now, updatedAt: now,
+  });
+
+  await db.courses.add({
+    name: 'Instal·lació de serveis televisius, cine, sport i streaming',
+    category: 'serveis_tecnics' as any,
+    level: 'basic', format: 'presential', duration: 2, price: 150,
+    maxStudents: 1, currentStudents: 0, status: 'active',
+    instructor: 'Saïd Hammouda', location: 'Domicili client',
+    description: 'Instal·lació i configuració professional de streaming, IPTV, televisió digital i serveis d\'entreteniment al domicili o empresa.',
+    objectives: `Instal·lació de decodificadors i Smart TV\nConfiguració de serveis IPTV i streaming\nNetflix, Disney+, HBO: configuració i comptes\nInstal·lació d'antenes i TDT\nConfiguració de xarxa per a streaming fluïd\nResolució de problemes d'imatge i so\nFormació bàsica en l'ús del sistema\nSuport tècnic post-instal·lació`,
+    tags: 'serveis-tecnics,streaming,iptv,televisio', createdAt: now, updatedAt: now,
+  });
 }
 
 async function hashForSeed(pin: string): Promise<string> {

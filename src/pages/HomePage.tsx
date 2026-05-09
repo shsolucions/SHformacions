@@ -24,7 +24,8 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 
 const CATEGORY_GROUPS: CourseCategory[] = [
   'excel', 'word', 'powerpoint', 'access', 'outlook',
-  'cloud', 'ia', 'actic', 'consulting',
+  'cloud', 'ia', 'actic', 'informatica', 'consulting',
+  'assessoria', 'serveis_tecnics',
 ];
 
 const WHY_ITEMS = [

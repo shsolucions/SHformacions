@@ -6,7 +6,8 @@ export type Theme = 'dark' | 'light';
 
 export type CourseCategory =
   | 'excel' | 'word' | 'access' | 'outlook'
-  | 'cloud' | 'it_repair' | 'consulting' | 'actic' | 'ai' | 'ia' | 'powerpoint';
+  | 'cloud' | 'it_repair' | 'consulting' | 'actic' | 'ai' | 'ia' | 'powerpoint'
+  | 'informatica' | 'assessoria' | 'serveis_tecnics';
 
 export type CourseStatus = 'active' | 'inactive' | 'full' | 'draft';
 export type CourseLevel = 'basic' | 'intermediate' | 'advanced';

@@ -35,6 +35,12 @@ function parseCSV(csv: string): string[][] {
   });
 }
 
+function parsePrice(raw: string): number {
+  // "125€" → 125 | "260€/sessió" → 260 | "150€/any" → 150 | "120" → 120 | "Segons Equip" → 0
+  const n = parseFloat(raw.replace(/[€$\s]/g, '').split('/')[0].replace(',', '.'));
+  return isFinite(n) && n > 0 ? n : 0;
+}
+
 function rowsToSheetPrices(rows: string[][]): SheetPrice[] {
   // Busquem la fila de capçalera (conté "Nom" o "Curs" o "Preu")
   const hi = rows.findIndex(r =>
@@ -47,7 +53,7 @@ function rowsToSheetPrices(rows: string[][]): SheetPrice[] {
     .map(r => ({
       name: r[1] ?? '',
       hours: parseInt(r[2]) || 0,
-      price: parseFloat((r[3] ?? '').replace(/[€EUR\s,]/g, '').trim()) || 0,
+      price: parsePrice(r[3] ?? ''),
       level: r[4] ?? '',
       mode: r[5] ?? '',
     }))
@@ -80,13 +86,43 @@ export async function getSheetPrices(): Promise<SheetPrice[]> {
   return [];
 }
 
+// Normalitza un nom per al matching: minúscules, sense accents, sense caràcters especials
+function normalizeName(s: string): string {
+  return s.toLowerCase()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // treu accents
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Extreu paraules significatives (exclou articles i preposicions curtes)
+function keyWords(s: string): string[] {
+  const stop = new Set(['a', 'de', 'del', 'la', 'les', 'el', 'els', 'i', 'per', 'per a', 'al', 'als', 'un', 'una', 'en', 'amb']);
+  return normalizeName(s).split(' ').filter(w => w.length > 1 && !stop.has(w));
+}
+
+function nameScore(sheetName: string, dbName: string): number {
+  const sn = normalizeName(sheetName);
+  const dn = normalizeName(dbName);
+  if (sn === dn) return 100;
+  if (sn.includes(dn) || dn.includes(sn)) return 80;
+  // Puntuació per paraules clau en comú
+  const sw = keyWords(sheetName);
+  const dw = keyWords(dbName);
+  if (sw.length === 0 || dw.length === 0) return 0;
+  const common = sw.filter(w => dw.includes(w)).length;
+  const ratio = common / Math.max(sw.length, dw.length);
+  return Math.round(ratio * 60);
+}
+
 // Retorna el preu del Sheets per un curs, o null si no es troba
 export async function getPriceForCourse(courseName: string): Promise<number | null> {
   const prices = await getSheetPrices();
-  const name = courseName.toLowerCase().trim();
-  const match = prices.find(p => {
-    const pName = p.name.toLowerCase().trim();
-    return pName === name || pName.includes(name) || name.includes(pName);
-  });
-  return match?.price ?? null;
+  let bestScore = 0;
+  let bestPrice: number | null = null;
+  for (const p of prices) {
+    const score = nameScore(p.name, courseName);
+    if (score > bestScore && score >= 50) { bestScore = score; bestPrice = p.price; }
+  }
+  return bestPrice;
 }

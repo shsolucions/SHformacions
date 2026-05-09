@@ -139,6 +139,9 @@ const de: Record<string, string> = {
   'cat.powerpoint': 'PowerPoint',
   'cat.ai': 'Künstliche Intelligenz',
   'cat.ia': 'Künstliche Intelligenz',
+  'cat.informatica': 'IT-Grundlagen',
+  'cat.assessoria': 'Beratung',
+  'cat.serveis_tecnics': 'Technische Dienste',
   'cat.all': 'Alle Kategorien',
 
   // Calendar

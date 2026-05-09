@@ -8,7 +8,7 @@ import { ToastProvider } from './context/ToastContext';
 import { AuthProvider } from './context/AuthContext';
 import { AuthModalProvider } from './context/AuthModalContext';
 import { NotificationProvider } from './context/NotificationContext';
-import { seedDatabase, seedIACourses, seedPowerPointCourses } from './db/database';
+import { seedDatabase, seedIACourses, seedPowerPointCourses, seedNewServicesCourses } from './db/database';
 import { CartProvider } from './context/CartContext';
 import './index.css';
 import './sw-unregister';
@@ -18,6 +18,7 @@ async function bootstrap() {
     await seedDatabase();
     await seedIACourses();
     await seedPowerPointCourses();
+    await seedNewServicesCourses();
   } catch (err) {
     console.warn('Seed skipped:', err);
   }
