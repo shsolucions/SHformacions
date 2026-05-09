@@ -126,36 +126,27 @@ export function HomePage() {
         <h2 className="text-base font-bold font-display mb-3" style={{ color: 'var(--text-primary)' }}>
           {t('courses.title')}
         </h2>
-        {/* 3 files: fila 1 (5 items), fila 2 (4 centrada), fila 3 (3 centrada) */}
+        {/* Fila 1: grid-cols-5 (mida original). Files 2 i 3: flex centrat, items
+            amb flex-basis idèntic a una cel·la de grid-cols-5 gap-2 */}
         <div className="flex flex-col gap-2">
-        {[
-          CATEGORY_GROUPS.slice(0, 5),
-          CATEGORY_GROUPS.slice(5, 9),
-          CATEGORY_GROUPS.slice(9),
-        ].map((row, rowIdx) => (
-          <div key={rowIdx}
-            className={rowIdx === 0 ? 'grid grid-cols-5 gap-2' : rowIdx === 1 ? 'grid grid-cols-4 gap-2 mx-auto' : 'grid grid-cols-3 gap-2 mx-auto'}
-            style={rowIdx === 1 ? { width: 'calc(80% - 1.6px)' } : rowIdx === 2 ? { width: 'calc(60% - 3.2px)' } : undefined}>
-            {row.map((key) => {
-              const grad = categoryGradients[key] ?? 'from-gray-700 to-gray-900';
-              return (
-                <Link key={key} to={`/cursos?cat=${key}`}
-                  className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
-                  style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
-                  <CourseIcon category={key} size={26} />
-                  <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-                    {t(`cat.${key}`)}
-                  </p>
-                  {counts[key] !== undefined && (
-                    <p className="text-[8px] leading-none" style={{ color: "rgba(255,255,255,0.6)" }}>
-                      {counts[key]} {counts[key] === 1 ? 'curs' : 'cursos'}
-                    </p>
-                  )}
-                </Link>
-              );
-            })}
+          {/* Fila 1 — 5 items */}
+          <div className="grid grid-cols-5 gap-2">
+            {CATEGORY_GROUPS.slice(0, 5).map((key) => (
+              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} />
+            ))}
           </div>
-        ))}
+          {/* Fila 2 — 4 items centrats */}
+          <div className="flex justify-center gap-2">
+            {CATEGORY_GROUPS.slice(5, 9).map((key) => (
+              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} flex />
+            ))}
+          </div>
+          {/* Fila 3 — 3 items centrats */}
+          <div className="flex justify-center gap-2">
+            {CATEGORY_GROUPS.slice(9).map((key) => (
+              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} flex />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -214,6 +205,36 @@ function AppVersionBadge() {
         {version} · Saïd Hammouda · SH Formació
       </span>
     </div>
+  );
+}
+
+function CategoryTile({ catKey, to, label, count, flex }: {
+  catKey: CourseCategory;
+  to: string;
+  label: string;
+  count?: number;
+  flex?: boolean;
+}) {
+  const grad = categoryGradients[catKey] ?? 'from-gray-700 to-gray-900';
+  return (
+    <Link to={to}
+      className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
+      style={{
+        border: '1px solid rgba(255,255,255,0.1)',
+        minHeight: 80,
+        ...(flex ? { flex: '0 0 calc((100% - 32px) / 5)' } : {}),
+      }}>
+      <CourseIcon category={catKey} size={26} />
+      <p className="text-[9px] font-semibold text-center leading-tight drop-shadow"
+        style={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
+        {label}
+      </p>
+      {count !== undefined && (
+        <p className="text-[8px] leading-none" style={{ color: 'rgba(255,255,255,0.6)' }}>
+          {count} {count === 1 ? 'curs' : 'cursos'}
+        </p>
+      )}
+    </Link>
   );
 }
 
