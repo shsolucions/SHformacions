@@ -521,7 +521,7 @@ Missatge de l'usuari: ${text}`
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu un missatge...'}
-                className="flex-1 h-11 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                className="flex-1 min-w-0 h-11 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
                 style={{
                   backgroundColor: 'var(--bg-input)',
                   color: 'var(--text-primary)',
