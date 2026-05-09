@@ -84,7 +84,6 @@ function ContactForm({ onSave, onSkip }: {
   );
 }
 
-// ── Tipus SpeechRecognition (API del navegador) ──────────────────────────────
 declare global {
   interface Window {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,23 +101,50 @@ export function ChatBot({ onClose }: ChatBotProps) {
   const [contactSaved, setContactSaved] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [userName, setUserName] = useState<string>('');
-  const [awaitingName, setAwaitingName] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  const [recogLang, setRecogLang] = useState<string>('ca');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const hasGreeted = useRef(false);
 
-  // Salutació inicial — enviem una instrucció clara per disparar la salutació
+  // Detecta mòbil en redimensionar
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  // iOS: ajusta l'alçada del xat quan el teclat s'obre/tanca
+  useEffect(() => {
+    if (!isMobile) return;
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const update = () => {
+      const el = containerRef.current;
+      if (!el) return;
+      el.style.height = `${vv.height}px`;
+      el.style.top = `${vv.offsetTop}px`;
+    };
+    vv.addEventListener('resize', update);
+    vv.addEventListener('scroll', update);
+    update();
+    return () => {
+      vv.removeEventListener('resize', update);
+      vv.removeEventListener('scroll', update);
+    };
+  }, [isMobile]);
+
+  // Salutació inicial
   useEffect(() => {
     if (hasGreeted.current) return;
     hasGreeted.current = true;
     setLoading(true);
-    // Salutació inicial simple — no cal cridar Gemini, és sempre igual
     setTimeout(() => {
       setMessages([{ role: 'model', text: "Hola! 👋 Soc el company virtual d'en Saïd 😊" }]);
       setLoading(false);
@@ -128,12 +154,10 @@ export function ChatBot({ onClose }: ChatBotProps) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); },
     [messages, loading, showContactForm]);
 
-  // Detectar si cal mostrar el formulari de contacte
   useEffect(() => {
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'model' || contactSaved || messages.length < 3) return;
     const text = last.text.toLowerCase();
-    // Mostrem el formulari quan el bot menciona dates, contacte, telèfon o correu
     const triggers = [
       'dates', 'disponibilitat', 'telèfon', 'correu', 'contacte',
       'posar-me en contacte', 'enviarte', 'enviar-te', 'pressupost',
@@ -144,8 +168,6 @@ export function ChatBot({ onClose }: ChatBotProps) {
     }
   }, [messages, contactSaved]);
 
-  // ── Detectar idioma actual de l'app per TTS ─────────────────────────────────
-  // Prioritats de veu per idioma (codi IETF)
   const VOICE_PREFS: Record<string, string[]> = {
     ca: ['ca-ES', 'ca_ES', 'ca', 'es-ES', 'es'],
     es: ['es-ES', 'es_ES', 'es', 'ca-ES'],
@@ -153,25 +175,21 @@ export function ChatBot({ onClose }: ChatBotProps) {
     fr: ['fr-FR', 'fr_FR', 'fr'],
   };
 
-  // Obtenim la llista de veus (Safari les carrega async)
   const getVoices = (): Promise<SpeechSynthesisVoice[]> =>
     new Promise(resolve => {
       const v = window.speechSynthesis?.getVoices() ?? [];
       if (v.length > 0) { resolve(v); return; }
-      // Safari carrega les veus de manera asíncrona
       const handler = () => { resolve(window.speechSynthesis.getVoices()); };
       window.speechSynthesis?.addEventListener('voiceschanged', handler, { once: true });
-      // Timeout de seguretat per si no dispara l'event
       setTimeout(() => resolve(window.speechSynthesis?.getVoices() ?? []), 1000);
     });
 
-  // Detecta l'idioma del text per triar la veu correcta
   const detectLang = (text: string): string => {
     const t = text.toLowerCase();
     if (/\b(bonjour|merci|oui|non|vous|je|est|les|des)\b/.test(t)) return 'fr';
     if (/\b(hello|thank|please|yes|no|course|want|need)\b/.test(t)) return 'en';
     if (/\b(hola|gracias|sí|no|quiero|puedo|tiene|precio)\b/.test(t)) return 'es';
-    return 'ca'; // Català per defecte
+    return 'ca';
   };
 
   const speak = async (text: string) => {
@@ -179,20 +197,15 @@ export function ChatBot({ onClose }: ChatBotProps) {
     const synth = window.speechSynthesis;
     if (!synth) return;
     synth.cancel();
-
-    // Netegem el text: eliminem Markdown i caràcters no parlables
     const clean = text
       .replace(/[*#_`~]/g, '')
-      .replace(/https?:\/\/\S+/g, '')   // eliminem URLs
+      .replace(/https?:\/\/\S+/g, '')
       .replace(/\s+/g, ' ')
       .trim();
     if (!clean) return;
-
     const lang = detectLang(clean);
     const prefs = VOICE_PREFS[lang] ?? ['ca-ES'];
     const voices = await getVoices();
-
-    // Triem la millor veu disponible
     let chosen: SpeechSynthesisVoice | null = null;
     for (const pref of prefs) {
       chosen = voices.find(v =>
@@ -200,38 +213,31 @@ export function ChatBot({ onClose }: ChatBotProps) {
       ) ?? null;
       if (chosen) break;
     }
-
     const utter = new SpeechSynthesisUtterance(clean);
     if (chosen) utter.voice = chosen;
     utter.lang = chosen?.lang ?? prefs[0];
-    utter.rate = lang === 'ca' ? 0.92 : 0.95; // Català una mica més lent per claredat
+    utter.rate = lang === 'ca' ? 0.92 : 0.95;
     utter.pitch = 1.0;
     utter.volume = 1.0;
     utter.onstart = () => setIsSpeaking(true);
     utter.onend = () => setIsSpeaking(false);
     utter.onerror = () => setIsSpeaking(false);
-
-    // Safari iOS: cal petita pausa per evitar que es talli la veu
     setTimeout(() => synth.speak(utter), 50);
   };
 
-  // ── Micròfon: reconeixement de veu (compatible Safari/Chrome) ─────────────
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const getSR = (): any => (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
   const RECOG_LANGS: Record<string, string> = {
     ca: 'ca-ES', es: 'es-ES', en: 'en-GB', fr: 'fr-FR',
   };
-  const [recogLang, setRecogLang] = useState<string>('ca');
 
   const startRecording = () => {
     const SR = getSR();
     if (!SR) {
-      // Safari iOS no suporta WebSpeech - missatge amigable
       alert('Per usar el micròfon necessites Safari iOS 14.5+ o Chrome. Comprova els permisos del micròfon a Configuració.');
       return;
     }
-    // Aturem qualsevol reconeixement anterior
     if (recognitionRef.current) {
       try { recognitionRef.current.abort(); } catch { /* ignorem */ }
     }
@@ -242,13 +248,13 @@ export function ChatBot({ onClose }: ChatBotProps) {
     rec.continuous = false;
     rec.interimResults = false;
     rec.maxAlternatives = 1;
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onresult = (e: any) => {
       const transcript: string = e.results?.[0]?.[0]?.transcript ?? '';
       if (transcript.trim()) setInput(prev => prev ? prev + ' ' + transcript : transcript);
       setIsRecording(false);
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     rec.onerror = (e: any) => {
       console.warn('SpeechRecognition error:', e.error);
       if (e.error === 'not-allowed') {
@@ -257,7 +263,6 @@ export function ChatBot({ onClose }: ChatBotProps) {
       setIsRecording(false);
     };
     rec.onend = () => setIsRecording(false);
-
     try {
       rec.start();
       setIsRecording(true);
@@ -285,15 +290,10 @@ export function ChatBot({ onClose }: ChatBotProps) {
     setMessages((prev) => [...prev, userMsg]);
     setLoading(true);
     try {
-      // Construïm l'historial per Gemini
-      // Si és el PRIMER missatge de l'usuari, afegim context que Gemini ja ha saludat
       const geminiHistory = [...messages].filter(m => m.role === 'user' || m.role === 'model');
-      // Traiem els missatges 'model' del principi (generats localment)
       while (geminiHistory.length > 0 && geminiHistory[0].role === 'model') {
         geminiHistory.shift();
       }
-      // Si és el primer missatge (historial buit), diem a Gemini que ja ha saludat
-      // i que OBLIGATÒRIAMENT ha de demanar el nom abans de res
       const isFirstMessage = geminiHistory.length === 0;
       const textToSend = isFirstMessage
         ? `[CONTEXT: Ja has saludat amb "Hola! Soc el company virtual d'en Saïd". L'usuari acaba d'escriure el seu primer missatge. OBLIGATORI: respon demanant el nom de l'usuari. No presentes opcions ni categories. Només demana el nom.]
@@ -335,73 +335,114 @@ Missatge de l'usuari: ${text}`
     }]);
   };
 
-  return (
-    <div className="fixed z-[60] flex flex-col shadow-2xl border overflow-hidden transition-all duration-300"
-      style={{
-        bottom: 88, right: 16,
-        width: 'min(380px, calc(100vw - 24px))',
-        height: isMinimized ? 56 : 'min(530px, calc(100svh - 110px))',
-        backgroundColor: 'var(--bg-card)',
-        borderColor: 'var(--border-strong)',
-        borderRadius: 20,
-      }}>
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const userMessages = messages.filter(m => m.role === 'user');
+    const hasRealContent = userMessages.length >= 2 && userMessages.map(m => m.text).join(' ').length > 15;
+    if (hasRealContent && !contactSaved) {
+      const fullChat = messages.map((m) =>
+        `${m.role === 'user' ? (userName || 'Client') : 'Assistent'}: ${m.text}`
+      ).join('\n');
+      const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
+      const keywords = ['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
+      const coursesFound = keywords.filter(k => userText.includes(k)).join(', ') || 'No especificats';
+      fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: "Analitza la conversa i escriu UN RESUM de maxim 2 frases. Format: [Nom client] interessat en [curs/tema] per a [N persones]. [Si ha deixat contacte: Ha deixat el telefon/correu]. Si no se sap el nom posa 'Client'. Exemple: Maria interessada en Word Inicial per a 10 persones empresa. Ha deixat el correu maria@empresa.cat. IMPORTANT: nomes el resum, sense cap altra cosa." }] },
+          contents: [{ role: 'user', parts: [{ text: `CONVERSA:\n${fullChat}\n\nESCRIU EL RESUM:` }] }]
+        })
+      }).then(r => r.json()).then(d => {
+        const resum = d.text || `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`;
+        saveConversationToSheet({ phone: '—', email: '—', summary: resum, courses: coursesFound, fullChat });
+      }).catch(() => {
+        saveConversationToSheet({ phone: '—', email: '—', summary: `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`, courses: coursesFound, fullChat });
+      });
+    }
+    onClose();
+  };
 
-      {/* Capçalera */}
-      <div className="flex items-center gap-2.5 px-3 flex-shrink-0 cursor-pointer"
-        style={{ background: 'linear-gradient(135deg, #0ea5e9, #0369a1)', height: 56 }}
-        onClick={() => setIsMinimized(!isMinimized)}>
-        <RobotAvatar size={34} />
+  return (
+    <div ref={containerRef}
+      className="fixed z-[60] flex flex-col shadow-2xl overflow-hidden"
+      style={isMobile
+        ? {
+            top: 0, left: 0, right: 0, bottom: 0,
+            width: '100%',
+            borderRadius: 0,
+            backgroundColor: 'var(--bg-card)',
+          }
+        : {
+            bottom: 88, right: 16,
+            width: 'min(380px, calc(100vw - 24px))',
+            height: isMinimized ? 56 : 'min(530px, calc(100svh - 110px))',
+            borderRadius: 20,
+            border: '1px solid var(--border-strong)',
+            backgroundColor: 'var(--bg-card)',
+            transition: 'height 0.3s',
+          }}>
+
+      {/* Espai safe area per al notch d'iOS (només mòbil) */}
+      {isMobile && (
+        <div style={{
+          background: 'linear-gradient(135deg, #0ea5e9, #0369a1)',
+          height: 'env(safe-area-inset-top, 0px)',
+          flexShrink: 0,
+        }} />
+      )}
+
+      {/* ── Capçalera ────────────────────────────────────────────── */}
+      <div
+        className="flex items-center gap-3 px-4 flex-shrink-0"
+        style={{
+          background: 'linear-gradient(135deg, #0ea5e9, #0369a1)',
+          height: isMobile ? 64 : 56,
+          cursor: isMobile ? 'default' : 'pointer',
+        }}
+        onClick={() => { if (!isMobile) setIsMinimized(v => !v); }}>
+
+        {/* Icona de perfil — visible i gran */}
+        <RobotAvatar size={isMobile ? 42 : 34} />
+
         <div className="flex-1 min-w-0">
-          <p className="text-white text-sm font-semibold leading-none">Assistent Virtual</p>
-          <div className="flex items-center gap-1.5 mt-0.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+          <p className="text-white font-semibold leading-none" style={{ fontSize: isMobile ? 16 : 14 }}>
+            Assistent Virtual
+          </p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse flex-shrink-0" />
             <p className="text-white/70 text-[10px]">SHformacions · En línia</p>
           </div>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); setIsMinimized(!isMinimized); }}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors text-white/80"
-          aria-label={isMinimized ? 'Expandir' : 'Minimitzar'}>
-          <ChevronDown size={18} className={`transition-transform ${isMinimized ? 'rotate-180' : ''}`} />
-        </button>
-        <button aria-label="Tancar" onClick={(e) => {
+
+        {/* Botó minimitzar — àrea tàctil 44×44 px */}
+        <button
+          onClick={(e) => {
             e.stopPropagation();
-            const userMessages = messages.filter(m => m.role === 'user');
-            const hasRealContent = userMessages.length >= 2 && userMessages.map(m => m.text).join(' ').length > 15;
-
-            if (hasRealContent && !contactSaved) {
-              const fullChat = messages.map((m) =>
-                `${m.role === 'user' ? (userName || 'Client') : 'Assistent'}: ${m.text}`
-              ).join('\n');
-              const userText = userMessages.map(m => m.text).join(' ').toLowerCase();
-              const keywords = ['excel','word','powerpoint','access','outlook','actic','ia','cloud','microsoft','consultoria'];
-              const coursesFound = keywords.filter(k => userText.includes(k)).join(', ') || 'No especificats';
-
-              // Demanem a Gemini un resum real de la conversa
-              fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  system_instruction: { parts: [{ text: "Analitza la conversa i escriu UN RESUM de maxim 2 frases. Format: [Nom client] interessat en [curs/tema] per a [N persones]. [Si ha deixat contacte: Ha deixat el telefon/correu]. Si no se sap el nom posa 'Client'. Exemple: Maria interessada en Word Inicial per a 10 persones empresa. Ha deixat el correu maria@empresa.cat. IMPORTANT: nomes el resum, sense cap altra cosa." }] },
-                  contents: [{ role: 'user', parts: [{ text: `CONVERSA:\n${fullChat}\n\nESCRIU EL RESUM:` }] }]
-                })
-              }).then(r => r.json()).then(d => {
-                const resum = d.text || `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`;
-                saveConversationToSheet({ phone: '—', email: '—', summary: resum, courses: coursesFound, fullChat });
-              }).catch(() => {
-                saveConversationToSheet({ phone: '—', email: '—', summary: `${userName || 'Desconegut'}: ${userText.slice(0, 200)}`, courses: coursesFound, fullChat });
-              });
-            }
-            onClose();
+            if (isMobile) { onClose(); } else { setIsMinimized(v => !v); }
           }}
-          className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/20 active:bg-white/30 transition-colors text-white">
-          <X size={17} />
+          className="flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors text-white/80 flex-shrink-0"
+          style={{ width: 44, height: 44 }}
+          aria-label={isMinimized ? 'Expandir' : 'Minimitzar'}>
+          <ChevronDown size={20} className={`transition-transform ${!isMobile && isMinimized ? 'rotate-180' : ''}`} />
+        </button>
+
+        {/* Botó tancar — àrea tàctil 44×44 px */}
+        <button
+          aria-label="Tancar"
+          onClick={handleClose}
+          className="flex items-center justify-center rounded-full hover:bg-white/20 active:bg-white/30 transition-colors text-white flex-shrink-0"
+          style={{ width: 44, height: 44 }}>
+          <X size={20} />
         </button>
       </div>
 
-      {!isMinimized && (
+      {(!isMinimized || isMobile) && (
         <>
-          {/* Missatges */}
-          <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
+          {/* ── Zona de missatges ───────────────────────────────── */}
+          <div
+            className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3"
+            style={{ WebkitOverflowScrolling: 'touch' }}>
             {messages.map((msg, i) => <Message key={i} msg={msg} />)}
             {loading && (
               <div className="flex gap-2 items-start">
@@ -415,7 +456,7 @@ Missatge de l'usuari: ${text}`
             <div ref={bottomRef} />
           </div>
 
-          {/* Input + controls de veu */}
+          {/* ── Barra d'entrada ─────────────────────────────────── */}
           <div className="flex flex-col border-t flex-shrink-0" style={{ borderColor: 'var(--border-base)' }}>
 
             {/* Selector d'idioma quan el micròfon és actiu */}
@@ -437,23 +478,25 @@ Missatge de l'usuari: ${text}`
             )}
 
             <div className="flex items-center gap-2 px-3 py-2.5">
-              {/* Micro + Altaveu */}
+              {/* Botó micròfon */}
               {hasSpeechSupport && (
                 <button
                   onClick={isRecording ? stopRecording : startRecording}
                   disabled={loading}
                   title={isRecording ? 'Atura gravació' : 'Gravar veu'}
                   className={[
-                    'w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 active:scale-90',
+                    'flex items-center justify-center rounded-xl transition-all flex-shrink-0 active:scale-90',
                     isRecording ? 'bg-red-500 animate-pulse' : 'border hover:bg-accent-500/10',
                   ].join(' ')}
-                  style={isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }}>
-                  {isRecording
-                    ? <MicOff size={16} className="text-white" />
-                    : <Mic size={16} />}
+                  style={{
+                    width: 44, height: 44, minWidth: 44,
+                    ...(isRecording ? {} : { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' }),
+                  }}>
+                  {isRecording ? <MicOff size={18} className="text-white" /> : <Mic size={18} />}
                 </button>
               )}
 
+              {/* Botó altaveu */}
               <button
                 onClick={() => {
                   const next = !voiceEnabled;
@@ -462,30 +505,49 @@ Missatge de l'usuari: ${text}`
                 }}
                 title={voiceEnabled ? 'Desactivar veu del bot' : 'Activar veu del bot'}
                 className={[
-                  'w-10 h-10 rounded-xl flex items-center justify-center transition-all flex-shrink-0 border active:scale-90',
+                  'flex items-center justify-center rounded-xl transition-all flex-shrink-0 border active:scale-90',
                   voiceEnabled ? 'bg-accent-500/20 border-accent-500' : '',
                   isSpeaking ? 'animate-pulse' : '',
                 ].join(' ')}
-                style={!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}}>
-                <Volume2 size={16} className={voiceEnabled ? 'text-accent-500' : ''} />
+                style={{
+                  width: 44, height: 44, minWidth: 44,
+                  ...(!voiceEnabled ? { borderColor: 'var(--border-strong)', color: 'var(--text-muted)' } : {}),
+                }}>
+                <Volume2 size={18} className={voiceEnabled ? 'text-accent-500' : ''} />
               </button>
 
+              {/* Camp de text */}
               <input ref={inputRef} type="text" value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
                 placeholder={isRecording ? '🎙️ Escoltant...' : 'Escriu un missatge...'}
-                className="flex-1 h-10 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
-                style={{ backgroundColor: 'var(--bg-input)', color: 'var(--text-primary)', borderColor: 'var(--border-input)', fontSize: '16px' }}
+                className="flex-1 h-11 px-3 rounded-xl border outline-none focus:border-accent-500 transition-colors"
+                style={{
+                  backgroundColor: 'var(--bg-input)',
+                  color: 'var(--text-primary)',
+                  borderColor: 'var(--border-input)',
+                  fontSize: '16px',
+                }}
                 disabled={loading} />
 
-              {/* Botó enviar — més gran per a mòbil */}
+              {/* Botó enviar */}
               <button onClick={handleSend} disabled={!input.trim() || loading}
-                className="w-10 h-10 rounded-xl bg-accent-500 hover:bg-accent-600 active:scale-90 disabled:opacity-40 flex items-center justify-center transition-all flex-shrink-0">
+                className="flex items-center justify-center rounded-xl bg-accent-500 hover:bg-accent-600 active:scale-90 disabled:opacity-40 transition-all flex-shrink-0"
+                style={{ width: 44, height: 44, minWidth: 44 }}>
                 {loading
-                  ? <Loader2 size={16} className="text-white animate-spin" />
-                  : <Send size={16} className="text-white" />}
+                  ? <Loader2 size={18} className="text-white animate-spin" />
+                  : <Send size={18} className="text-white" />}
               </button>
             </div>
+
+            {/* Espai safe area per a la barra d'inici d'iOS */}
+            {isMobile && (
+              <div style={{
+                height: 'env(safe-area-inset-bottom, 0px)',
+                backgroundColor: 'var(--bg-card)',
+                flexShrink: 0,
+              }} />
+            )}
           </div>
         </>
       )}
