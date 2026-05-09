@@ -36,7 +36,7 @@ function csvToRows(csv: string): string[][] {
 
 async function buildSystemPrompt(): Promise<string> {
   let instructions = '';
-  const instrCSV = await fetchSheet('tInstruccions');
+  const instrCSV = await fetchSheet('Instruccions');
   if (instrCSV) {
     const rows = csvToRows(instrCSV);
     const txt = rows[1]?.[2] ?? '';
