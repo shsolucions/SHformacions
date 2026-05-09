@@ -41,7 +41,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       payment_intent_data: {
         statement_descriptor_suffix: 'SHFORMACIONS',
       },
-      locale: 'ca',
+      locale: 'auto',
     });
 
     return res.status(200).json({ url: session.url });
