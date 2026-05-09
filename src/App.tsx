@@ -28,6 +28,9 @@ import { RegisterPage } from './pages/RegisterPage';
 import { DiplomasPage }       from './pages/DiplomasPage';
 import { VerifyDiplomaPage }  from './pages/VerifyDiplomaPage';
 
+// Payment result pages
+import { PaymentSuccessPage } from './pages/PaymentSuccessPage';
+
 // ── Guards ───────────────────────────────────────────────────────────
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
@@ -103,6 +106,9 @@ export default function App() {
         {/* Diplomes (Entrega 3.4) */}
         <Route path="/diplomes"  element={<RequireAuth><AppLayout><DiplomasPage /></AppLayout></RequireAuth>} />
         <Route path="/verificar" element={<AppLayout><VerifyDiplomaPage /></AppLayout>} />
+
+        {/* Stripe payment result */}
+        <Route path="/pagament-ok" element={<PaymentSuccessPage />} />
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />

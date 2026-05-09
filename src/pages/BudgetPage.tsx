@@ -36,6 +36,55 @@ function PayMethodChip({ icon, label, sub, color }: {
 
 const PAYPAL_CLIENT_ID = import.meta.env.VITE_PAYPAL_CLIENT_ID ?? '';
 
+function StripeButton({ amount, description, onError }: {
+  amount: number;
+  description: string;
+  onError: () => void;
+}) {
+  const [loading, setLoading] = React.useState(false);
+
+  if (amount <= 0) return null;
+
+  const handleClick = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, description }),
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok || data.error || !data.url) throw new Error(data.error ?? 'Error Stripe');
+      window.location.href = data.url;
+    } catch {
+      setLoading(false);
+      onError();
+    }
+  };
+
+  const amountStr = amount.toLocaleString('ca-ES', { style: 'currency', currency: 'EUR' });
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={loading}
+      className="w-full flex items-center gap-2.5 px-4 py-3 rounded-2xl border transition-colors hover:bg-[#635BFF]/5 active:bg-[#635BFF]/10 disabled:opacity-60"
+      style={{ borderColor: loading ? '#635BFF50' : 'var(--border-base)', backgroundColor: 'var(--bg-card)' }}
+    >
+      <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0"
+        style={{ backgroundColor: '#635BFF15', border: '1px solid #635BFF30' }}>
+        <CreditCard size={14} style={{ color: '#635BFF' }} />
+      </div>
+      <span className="text-sm font-semibold flex-1 text-left" style={{ color: '#635BFF' }}>
+        {loading ? 'Redirigint...' : 'Pagar amb targeta'}
+      </span>
+      <span className="text-sm font-black tabular-nums flex-shrink-0" style={{ color: '#635BFF' }}>
+        {amountStr}
+      </span>
+    </button>
+  );
+}
+
 function PayPalDirect({ amount, description, onSuccess, onError }: {
   amount: number;
   description: string;
@@ -474,6 +523,13 @@ export function BudgetPage() {
           </div>
         </div>
       </div>
+
+      {/* PAGAMENT STRIPE — Targeta */}
+      <StripeButton
+        amount={subtotal}
+        description={courses.map(c => `${c.name} ×${getQty(c.id!)}`).join(', ')}
+        onError={() => showToast('Error al processar el pagament. Torneu-ho a provar.', 'error')}
+      />
 
       {/* PAGAMENT PAYPAL DIRECTE */}
       <PayPalDirect
