@@ -8,7 +8,7 @@ export function RobotButton() {
   return (
     <>
       {chatOpen && <ChatBot onClose={() => setChatOpen(false)} />}
-      <div className="fixed bottom-20 right-3 z-50 flex flex-col items-end gap-2">
+      <div className={`fixed bottom-20 right-3 z-50 flex flex-col items-end gap-2 transition-opacity duration-200 ${chatOpen ? 'opacity-0 pointer-events-none' : ''}`}>
 
         {/* Bombolla de text */}
         {hovered && !chatOpen && (

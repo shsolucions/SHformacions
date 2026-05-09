@@ -477,7 +477,7 @@ Missatge de l'usuari: ${text}`
               </div>
             )}
 
-            <div className="flex items-center gap-2 px-3 py-2.5">
+            <div className="flex items-center gap-2 px-3 pr-4 py-2.5">
               {/* Botó micròfon */}
               {hasSpeechSupport && (
                 <button
