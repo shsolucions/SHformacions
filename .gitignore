@@ -29,3 +29,6 @@ dist-ssr
 
 # PWA
 **/dev-dist/
+
+# Vercel build output (no ha d'estar al repo)
+.vercel/output/
