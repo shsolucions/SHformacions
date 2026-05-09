@@ -23,13 +23,15 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 const CATEGORY_GROUPS: CourseCategory[] = [
-  // Fila 1 (5 items)
-  'excel', 'word', 'powerpoint', 'access', 'outlook',
-  // Fila 2 (4 items, centrada)
-  'cloud', 'ia', 'actic', 'informatica',
-  // Fila 3 (3 items, centrada)
-  'consulting', 'assessoria', 'serveis_tecnics',
+  // Fila 1
+  'excel', 'word', 'powerpoint', 'access',
+  // Fila 2
+  'ia', 'actic', 'cloud', 'outlook',
+  // Fila 3
+  'informatica', 'consulting', 'assessoria', 'serveis_tecnics',
 ];
+
+const SERVICE_CATS = new Set(['consulting', 'assessoria', 'serveis_tecnics']);
 
 const WHY_ITEMS = [
   { icon: <Star size={18} className="text-yellow-400" />, title: 'Instructor expert', desc: "+15 anys d'experiència en formació IT i empreses" },
@@ -126,25 +128,24 @@ export function HomePage() {
         <h2 className="text-base font-bold font-display mb-3" style={{ color: 'var(--text-primary)' }}>
           {t('courses.title')}
         </h2>
-        {/* Fila 1: grid-cols-5 (mida original). Files 2 i 3: flex centrat, items
-            amb flex-basis idèntic a una cel·la de grid-cols-5 gap-2 */}
         <div className="flex flex-col gap-2">
-          {/* Fila 1 — 5 items */}
-          <div className="grid grid-cols-5 gap-2">
-            {CATEGORY_GROUPS.slice(0, 5).map((key) => (
+          {/* Fila 1 — 4 items */}
+          <div className="grid grid-cols-4 gap-2">
+            {CATEGORY_GROUPS.slice(0, 4).map((key) => (
               <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} />
             ))}
           </div>
-          {/* Fila 2 — 4 items centrats */}
-          <div className="flex justify-center gap-2">
-            {CATEGORY_GROUPS.slice(5, 9).map((key) => (
-              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} flex />
+          {/* Fila 2 — 4 items */}
+          <div className="grid grid-cols-4 gap-2">
+            {CATEGORY_GROUPS.slice(4, 8).map((key) => (
+              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} />
             ))}
           </div>
-          {/* Fila 3 — 3 items centrats */}
-          <div className="flex justify-center gap-2">
-            {CATEGORY_GROUPS.slice(9).map((key) => (
-              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]} flex />
+          {/* Fila 3 — 4 items (consulting/assessoria/serveis_tecnics mostren "serveis") */}
+          <div className="grid grid-cols-4 gap-2">
+            {CATEGORY_GROUPS.slice(8).map((key) => (
+              <CategoryTile key={key} catKey={key} to={`/cursos?cat=${key}`} label={t(`cat.${key}`)} count={counts[key]}
+                unit={SERVICE_CATS.has(key) ? 'servei' : 'curs'} />
             ))}
           </div>
         </div>
@@ -208,22 +209,19 @@ function AppVersionBadge() {
   );
 }
 
-function CategoryTile({ catKey, to, label, count, flex }: {
+function CategoryTile({ catKey, to, label, count, unit = 'curs' }: {
   catKey: CourseCategory;
   to: string;
   label: string;
   count?: number;
-  flex?: boolean;
+  unit?: string;
 }) {
   const grad = categoryGradients[catKey] ?? 'from-gray-700 to-gray-900';
+  const plurals: Record<string, string> = { curs: 'cursos', servei: 'serveis' };
   return (
     <Link to={to}
       className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
-      style={{
-        border: '1px solid rgba(255,255,255,0.1)',
-        minHeight: 80,
-        ...(flex ? { flex: '0 0 calc((100% - 32px) / 5)' } : {}),
-      }}>
+      style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
       <CourseIcon category={catKey} size={26} />
       <p className="text-[9px] font-semibold text-center leading-tight drop-shadow"
         style={{ color: '#ffffff', textShadow: '0 1px 3px rgba(0,0,0,0.5)' }}>
@@ -231,7 +229,7 @@ function CategoryTile({ catKey, to, label, count, flex }: {
       </p>
       {count !== undefined && (
         <p className="text-[8px] leading-none" style={{ color: 'rgba(255,255,255,0.6)' }}>
-          {count} {count === 1 ? 'curs' : 'cursos'}
+          {count} {count === 1 ? unit : (plurals[unit] ?? unit + 's')}
         </p>
       )}
     </Link>
