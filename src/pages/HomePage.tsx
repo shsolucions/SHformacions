@@ -23,9 +23,12 @@ function seededShuffle<T>(arr: T[], seed: number): T[] {
 }
 
 const CATEGORY_GROUPS: CourseCategory[] = [
+  // Fila 1 (5 items)
   'excel', 'word', 'powerpoint', 'access', 'outlook',
-  'cloud', 'ia', 'actic', 'informatica', 'consulting',
-  'assessoria', 'serveis_tecnics',
+  // Fila 2 (4 items, centrada)
+  'cloud', 'ia', 'actic', 'informatica',
+  // Fila 3 (3 items, centrada)
+  'consulting', 'assessoria', 'serveis_tecnics',
 ];
 
 const WHY_ITEMS = [
@@ -123,26 +126,36 @@ export function HomePage() {
         <h2 className="text-base font-bold font-display mb-3" style={{ color: 'var(--text-primary)' }}>
           {t('courses.title')}
         </h2>
-        {/* Grid de 5 columnes per ficar els 10 en 2 files */}
-        <div className="grid grid-cols-5 gap-2">
-          {CATEGORY_GROUPS.map((key) => {
-            const grad = categoryGradients[key] ?? 'from-gray-700 to-gray-900';
-            return (
-              <Link key={key} to={`/cursos?cat=${key}`}
-                className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
-                style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
-                <CourseIcon category={key} size={26} />
-                <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
-                  {t(`cat.${key}`)}
-                </p>
-                {counts[key] !== undefined && (
-                  <p className="text-[8px] leading-none" style={{ color: "rgba(255,255,255,0.6)" }}>
-                    {counts[key]} {counts[key] === 1 ? 'curs' : 'cursos'}
+        {/* 3 files: fila 1 (5 items), fila 2 (4 centrada), fila 3 (3 centrada) */}
+        <div className="flex flex-col gap-2">
+        {[
+          CATEGORY_GROUPS.slice(0, 5),
+          CATEGORY_GROUPS.slice(5, 9),
+          CATEGORY_GROUPS.slice(9),
+        ].map((row, rowIdx) => (
+          <div key={rowIdx}
+            className={rowIdx === 0 ? 'grid grid-cols-5 gap-2' : rowIdx === 1 ? 'grid grid-cols-4 gap-2 mx-auto' : 'grid grid-cols-3 gap-2 mx-auto'}
+            style={rowIdx === 1 ? { width: 'calc(80% - 1.6px)' } : rowIdx === 2 ? { width: 'calc(60% - 3.2px)' } : undefined}>
+            {row.map((key) => {
+              const grad = categoryGradients[key] ?? 'from-gray-700 to-gray-900';
+              return (
+                <Link key={key} to={`/cursos?cat=${key}`}
+                  className={`bg-gradient-to-br ${grad} rounded-2xl p-2.5 flex flex-col items-center gap-1.5 hover:scale-[1.04] active:scale-95 transition-all`}
+                  style={{ border: '1px solid rgba(255,255,255,0.1)', minHeight: 80 }}>
+                  <CourseIcon category={key} size={26} />
+                  <p className="text-[9px] font-semibold text-center leading-tight drop-shadow" style={{ color: "#ffffff", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>
+                    {t(`cat.${key}`)}
                   </p>
-                )}
-              </Link>
-            );
-          })}
+                  {counts[key] !== undefined && (
+                    <p className="text-[8px] leading-none" style={{ color: "rgba(255,255,255,0.6)" }}>
+                      {counts[key]} {counts[key] === 1 ? 'curs' : 'cursos'}
+                    </p>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
         </div>
       </div>
 
