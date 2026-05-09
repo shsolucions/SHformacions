@@ -23,15 +23,26 @@ async function fetchSheet(name: string): Promise<string> {
 }
 
 function csvToRows(csv: string): string[][] {
-  return csv.split('\n').filter(Boolean).map(line => {
-    const cols: string[] = []; let cur = '', q = false;
-    for (const c of line) {
-      if (c === '"') { q = !q; }
-      else if (c === ',' && !q) { cols.push(cur.trim()); cur = ''; }
-      else cur += c;
+  const rows: string[][] = [];
+  let cols: string[] = [], cur = '', q = false;
+  for (let i = 0; i < csv.length; i++) {
+    const c = csv[i];
+    if (c === '"') {
+      if (q && csv[i + 1] === '"') { cur += '"'; i++; } // cometa escapada
+      else q = !q;
+    } else if (c === ',' && !q) {
+      cols.push(cur.trim()); cur = '';
+    } else if ((c === '\n' || c === '\r') && !q) {
+      if (c === '\r' && csv[i + 1] === '\n') i++; // CRLF
+      cols.push(cur.trim());
+      if (cols.some(v => v !== '')) rows.push(cols);
+      cols = []; cur = '';
+    } else {
+      cur += c;
     }
-    cols.push(cur.trim()); return cols;
-  });
+  }
+  if (cur || cols.length > 0) { cols.push(cur.trim()); if (cols.some(v => v !== '')) rows.push(cols); }
+  return rows;
 }
 
 async function buildSystemPrompt(): Promise<string> {
