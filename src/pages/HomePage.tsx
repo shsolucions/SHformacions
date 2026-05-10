@@ -45,7 +45,7 @@ export function HomePage() {
   const { isDark } = useTheme();
   const [featured, setFeatured] = useState<Course[]>([]);
   const [counts, setCounts] = useState<Record<string, number>>({});
-  const { getPrice } = useSheetPrices();
+  const { getPrice, getHours } = useSheetPrices();
 
   const location = useLocation();
 
@@ -165,7 +165,7 @@ export function HomePage() {
           </div>
           <div className="flex flex-col gap-2.5">
             {featured.map((course) => (
-              <FeaturedCourseCard key={course.id} course={course} t={t} getPrice={getPrice} />
+              <FeaturedCourseCard key={course.id} course={course} t={t} getPrice={getPrice} getHours={getHours} />
             ))}
           </div>
         </div>
@@ -236,14 +236,15 @@ function CategoryTile({ catKey, to, label, count, unit = 'curs' }: {
   );
 }
 
-function FeaturedCourseCard({ course, t, getPrice }: {
+function FeaturedCourseCard({ course, t, getPrice, getHours }: {
   course: Course;
   t: (k: string) => string;
   getPrice: (name: string, fallback: number) => number;
+  getHours: (name: string, fallback: number) => number;
 }) {
   const grad = categoryGradients[course.category] ?? 'from-gray-700 to-gray-900';
-  // Preu en temps real del Google Sheet (fallback al preu Dexie si no hi és)
   const livePrice = getPrice(course.name, course.price);
+  const liveHours = getHours(course.name, course.duration);
   return (
     <Link to={`/cursos/${course.id}`}
       className={`flex items-center gap-3 bg-gradient-to-r ${grad} rounded-2xl p-3.5 hover:opacity-95 transition-all`}
@@ -254,7 +255,7 @@ function FeaturedCourseCard({ course, t, getPrice }: {
       <div className="min-w-0 flex-1">
         {/* Sempre blanc perquè sempre va sobre gradient fosc */}
         <p className="text-sm font-semibold text-white truncate">{course.name}</p>
-        <p className="text-xs text-white/55 mt-0.5">{course.duration}h · {t(`courses.level_${course.level}`)}</p>
+        <p className="text-xs text-white/55 mt-0.5">{liveHours}h · {t(`courses.level_${course.level}`)}</p>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0">
         <span className="text-sm font-black text-white tabular-nums">

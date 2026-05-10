@@ -50,5 +50,17 @@ export function useSheetPrices() {
     return bestPrice;
   };
 
-  return { prices, getPrice, loaded: globalLoaded };
+  const getHours = (courseName: string, fallback: number): number => {
+    if (!prices.length) return fallback;
+    let bestScore = 0;
+    let bestHours = fallback;
+    for (const p of prices) {
+      if (!p.hours) continue;
+      const s = score(p.name, courseName);
+      if (s > bestScore && s >= 50) { bestScore = s; bestHours = p.hours; }
+    }
+    return bestHours;
+  };
+
+  return { prices, getPrice, getHours, loaded: globalLoaded };
 }

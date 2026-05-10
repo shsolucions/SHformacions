@@ -211,6 +211,7 @@ export function BudgetPage() {
   const [loading, setLoading] = useState(true);
   const [budgetSaved, setBudgetSaved] = useState(false);
   const [sheetPrices, setSheetPrices] = useState<Record<string, number>>({});
+  const [sheetHours, setSheetHours] = useState<Record<string, number>>({});
 
   const loadCourses = useCallback(() => {
     if (cartIds.length === 0) { setCourses([]); setLoading(false); return; }
@@ -253,9 +254,11 @@ export function BudgetPage() {
 
   useEffect(() => {
     getSheetPrices().then(prices => {
-      const map: Record<string, number> = {};
-      prices.forEach(p => { map[p.name] = p.price; });
-      setSheetPrices(map);
+      const priceMap: Record<string, number> = {};
+      const hoursMap: Record<string, number> = {};
+      prices.forEach(p => { priceMap[p.name] = p.price; if (p.hours) hoursMap[p.name] = p.hours; });
+      setSheetPrices(priceMap);
+      setSheetHours(hoursMap);
     }).catch(() => {});
   }, []);
 
@@ -265,6 +268,14 @@ export function BudgetPage() {
       k.toLowerCase().includes(name) || name.includes(k.toLowerCase())
     );
     return entry ? entry[1] : course.price;
+  };
+
+  const getCourseHours = (course: Course): number => {
+    const name = course.name.toLowerCase();
+    const entry = Object.entries(sheetHours).find(([k]) =>
+      k.toLowerCase().includes(name) || name.includes(k.toLowerCase())
+    );
+    return entry ? entry[1] : course.duration;
   };
 
   const getQty = (id: number) => cartItems.find(i => i.id === id)?.qty ?? 1;
@@ -280,7 +291,7 @@ export function BudgetPage() {
   };
 
   const subtotal = courses.reduce((s, c) => s + getLineTotal(c), 0);
-  const totalHours = courses.reduce((s, c) => s + c.duration * getQty(c.id!), 0);
+  const totalHours = courses.reduce((s, c) => s + getCourseHours(c) * getQty(c.id!), 0);
 
   const handleRemove = (course: Course) => {
     removeFromCart(course.id!);
@@ -294,7 +305,7 @@ export function BudgetPage() {
       const disc = getDiscount(qty);
       const total = getLineTotal(c);
       const discText = disc > 0 ? ` (descompte ${(disc * 100).toFixed(0)}%)` : '';
-      return `  • ${c.name} — ${qty} persona${qty > 1 ? 'es' : ''} × ${formatCurrency(price)}${discText} = ${formatCurrency(total)} (${c.duration}h)`;
+      return `  • ${c.name} — ${qty} persona${qty > 1 ? 'es' : ''} × ${formatCurrency(price)}${discText} = ${formatCurrency(total)} (${getCourseHours(c)}h)`;
     }).join('\n');
     return (
       `Hola! M'interessa realitzar els cursos següents:\n\n${lines}` +
@@ -428,7 +439,7 @@ export function BudgetPage() {
                       style={{ color: 'var(--text-primary)' }}>{course.name}</p>
                   </Link>
                   <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
-                    {course.duration}h · {formatCurrency(price)} / persona
+                    {getCourseHours(course)}h · {formatCurrency(price)} / persona
                   </p>
                 </div>
                 <button onClick={() => handleRemove(course)}
