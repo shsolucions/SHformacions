@@ -73,7 +73,7 @@ export async function getSheetPrices(): Promise<SheetPrice[]> {
       const data = rowsToSheetPrices(rows);
       if (data.length > 0) {
         console.log(`✅ Preus carregats del full "${name}": ${data.length} cursos`);
-        data.forEach(d => console.log(`  ${d.name}: ${d.price}€`));
+        data.forEach(d => console.log(`  ${d.name}: ${d.hours}h · ${d.price}€`));
         priceCache = { data, ts: Date.now() };
         return data;
       }

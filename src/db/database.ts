@@ -68,6 +68,36 @@ export class SHformacionsDatabase extends Dexie {
         if (fix.duration) course.duration = fix.duration;
       });
     });
+
+    // v3: correcció de durades que el seed tenia incorrectes per a usuaris nous
+    this.version(3).stores({
+      users:         '++id, nickname, role, active, createdAt',
+      courses:       '++id, category, status, startDate, endDate, createdAt',
+      requests:      '++id, userId, courseId, status, createdAt',
+      payments:      '++id, userId, courseId, status, method, createdAt',
+      notifications: '++id, userId, type, read, createdAt',
+      settings:      '++id, &key',
+    }).upgrade(tx => {
+      const durationFixes: Record<string, number> = {
+        'Excel Intermedi':                         12,
+        'Excel Avançat':                           12,
+        'Microsoft 365 Intermedi':                 10,
+        'Microsoft 365 Avançat per a Empreses':    12,
+        'IA Inicial: Introducció a la Intel·ligència Artificial': 10,
+        'IA Inicial: Fonaments i Eines Pràctiques': 10,
+        'IA Avançat: IA per a Empreses i Professionals': 12,
+        'IA Avançat: Automatització i Agents':     12,
+        'IA Avançada i Automatitzacions':          12,
+        'IA per a Vendes i Atenció al Client':      6,
+        'IA per a Atenció al Client':               6,
+        'IA per a Direcció i Gestió':               6,
+        'IA per a Direcció i Gestió Empresarial':   6,
+      };
+      return tx.table('courses').toCollection().modify((course: any) => {
+        const h = durationFixes[course.name];
+        if (h !== undefined) course.duration = h;
+      });
+    });
   }
 }
 
@@ -123,7 +153,7 @@ Imprimir i exportar a PDF`,
 
   await addCourse({
     name: 'Excel Intermedi', category: 'excel', level: 'intermediate', format: 'hybrid',
-    duration: 16, price: 140, maxStudents: 12, currentStudents: 5, status: 'active',
+    duration: 12, price: 140, maxStudents: 12, currentStudents: 5, status: 'active',
     instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 2, endDate: now + W * 2 + M,
     description: 'Aprofundeix en Excel amb funcions avançades, taules dinàmiques i eines de productivitat per a l\'entorn professional.',
@@ -140,7 +170,7 @@ Protecció de cel·les, fulls i llibres`,
 
   await addCourse({
     name: 'Excel Avançat', category: 'excel', level: 'advanced', format: 'hybrid',
-    duration: 20, price: 180, maxStudents: 10, currentStudents: 2, status: 'active',
+    duration: 12, price: 180, maxStudents: 10, currentStudents: 2, status: 'active',
     instructor: 'Saïd Hammouda', location: 'Aula 1 / Online',
     startDate: now + W * 3, endDate: now + W * 3 + M * 2,
     description: 'Domina les eines més potents d\'Excel: macros, Power Query, dashboards i automatització. Nivell professional.',
@@ -307,7 +337,7 @@ Bones pràctiques de seguretat digital`,
 
   await addCourse({
     name: 'Microsoft 365 Intermedi', category: 'cloud', level: 'intermediate', format: 'hybrid',
-    duration: 16, price: 150, maxStudents: 12, currentStudents: 3, status: 'active',
+    duration: 10, price: 150, maxStudents: 12, currentStudents: 3, status: 'active',
     instructor: 'Saïd Hammouda', location: 'Aula 1 / Teams',
     startDate: now + W * 3, endDate: now + W * 3 + M,
     description: 'Potencia la col·laboració en equip amb Teams avançat, SharePoint, Planner i les eines de productivitat de M365.',
@@ -324,7 +354,7 @@ Power Automate: automatitzacions senzilles`,
 
   await addCourse({
     name: 'Microsoft 365 Avançat per a Empreses', category: 'cloud', level: 'advanced', format: 'hybrid',
-    duration: 24, price: 220, maxStudents: 10, currentStudents: 2, status: 'active',
+    duration: 12, price: 220, maxStudents: 10, currentStudents: 2, status: 'active',
     instructor: 'Saïd Hammouda', location: 'Empresa / Teams',
     startDate: now + W * 4, endDate: now + W * 4 + M * 2,
     description: 'Administra i optimitza Microsoft 365 per a l\'empresa. Inclou Power Platform, Azure AD i governança.',
